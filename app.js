@@ -70,6 +70,11 @@ const elements = {
     athanMethodSelect: document.getElementById('athan-method-select'),
     athanSchoolSelect: document.getElementById('athan-school-select'),
     
+    remoteModal: document.getElementById('remote-modal'),
+    remotePeerId: document.getElementById('remote-peer-id'),
+    remoteStatus: document.getElementById('remote-connection-status'),
+    remoteLink: document.getElementById('remote-control-link'),
+    
     hadithModal: document.getElementById('hadith-modal'),
     closeHadithBtn: document.getElementById('close-hadith-modal'),
     hadithText: document.getElementById('hadith-text'),
@@ -107,6 +112,14 @@ function setupEventListeners() {
     
     UI.on('.open-quran-btn', 'click', () => elements.quranModal.classList.add('open'));
     UI.on('#close-quran', 'click', () => elements.quranModal.classList.remove('open'));
+
+    UI.on('.remote-btn', 'click', () => {
+        if (elements.remoteModal) elements.remoteModal.classList.add('open');
+        initPeerServer();
+    });
+    UI.on('#close-remote', 'click', () => {
+        if (elements.remoteModal) elements.remoteModal.classList.remove('open');
+    });
 
     // Hadith Logic
     UI.on('.open-hadith-btn', 'click', () => {
@@ -771,6 +784,164 @@ function stopQuran() {
 
     if(currentSurahData) {
         elements.quranStatus.textContent = "Ready";
+    }
+}
+
+}
+
+// --- PeerJS P2P Remote Control Logic (Speaker Side) ---
+let peer = null;
+let peerConnection = null;
+
+function initPeerServer() {
+    if (peer) return; // Already initialized
+
+    // Generate a simple 5-digit number to make it easy to type on mobile
+    const randCode = Math.floor(10000 + Math.random() * 90000);
+    const customId = 'athan-' + randCode;
+    
+    if (elements.remotePeerId) elements.remotePeerId.textContent = "Connecting...";
+
+    peer = new Peer(customId, {
+        debug: 1 // Print warnings and errors
+    });
+
+    peer.on('open', (id) => {
+        console.log('Speaker Peer ID: ' + id);
+        const shortId = id.replace('athan-', '');
+        if (elements.remotePeerId) elements.remotePeerId.textContent = shortId;
+        
+        // Generate remote control link dynamically
+        const currentUrl = window.location.href.split('?')[0].split('#')[0];
+        const baseUrl = currentUrl.endsWith('index.html') ? currentUrl.replace('index.html', '') : currentUrl;
+        const remoteUrl = `${baseUrl}remote.html?id=${shortId}`;
+        
+        if (elements.remoteLink) {
+            elements.remoteLink.href = remoteUrl;
+        }
+    });
+
+    peer.on('connection', (conn) => {
+        if (peerConnection) {
+            // Reject new connections if we already have one active remote
+            conn.close();
+            return;
+        }
+        
+        peerConnection = conn;
+        updateRemoteStatus(true);
+
+        peerConnection.on('data', (data) => {
+            console.log('Received remote command:', data);
+            handleRemoteCommand(data);
+        });
+
+        peerConnection.on('close', () => {
+            peerConnection = null;
+            updateRemoteStatus(false);
+        });
+
+        peerConnection.on('error', (err) => {
+            console.error('Remote connection error:', err);
+            peerConnection = null;
+            updateRemoteStatus(false);
+        });
+    });
+
+    peer.on('error', (err) => {
+        console.error('PeerJS Broker Error:', err);
+        if (elements.remotePeerId) elements.remotePeerId.textContent = "Failed (Retry)";
+        peer = null; // Reset to allow retry
+    });
+}
+
+function updateRemoteStatus(connected) {
+    if (elements.remoteStatus) {
+        if (connected) {
+            elements.remoteStatus.innerHTML = "🟢 Connected to Phone";
+            elements.remoteStatus.style.color = "#22c55e";
+        } else {
+            elements.remoteStatus.innerHTML = "🔴 Not Connected";
+            elements.remoteStatus.style.color = "#ef4444";
+        }
+    }
+}
+
+function handleRemoteCommand(data) {
+    if (!data || !data.action) return;
+    
+    switch (data.action) {
+        case 'test_athan':
+            if (elements.testAthanBtn) {
+                elements.testAthanBtn.click();
+            }
+            break;
+            
+        case 'toggle_mute':
+            // Toggle config.isMuted
+            config.isMuted = !config.isMuted;
+            localStorage.setItem('isMuted', config.isMuted);
+            updateMuteUI();
+            
+            // Apply immediately to playing audio
+            if (config.isMuted && !elements.audio.paused) {
+                elements.audio.pause();
+                elements.audio.currentTime = 0;
+                if (elements.testAthanBtn) elements.testAthanBtn.innerHTML = '🔊 Test';
+            }
+            break;
+            
+        case 'play_quran':
+            if (data.surah) {
+                stopQuran();
+                elements.quranSurahSelect.value = data.surah;
+                elements.quranStatus.textContent = "Loading remote surah...";
+                loadSurahAudioData(data.surah).then(() => {
+                    startOrResumeQuran();
+                }).catch(e => {
+                    console.error("Failed to play remote Quran", e);
+                    elements.quranStatus.textContent = "Failed to load audio";
+                });
+            }
+            break;
+            
+        case 'stop_quran':
+            stopQuran();
+            break;
+            
+        case 'change_theme':
+            if (data.theme) {
+                applyTheme(data.theme);
+            }
+            break;
+            
+        case 'trigger_voice':
+            const micBtn = document.querySelector('.voice-cmd-btn');
+            if (micBtn) {
+                micBtn.click();
+            }
+            break;
+            
+        case 'change_method':
+            if (data.method) {
+                config.method = parseInt(data.method);
+                localStorage.setItem('athanMethod', config.method);
+                if (elements.athanMethodSelect) elements.athanMethodSelect.value = config.method;
+                fetchPrayerTimes();
+            }
+            break;
+            
+        case 'change_school':
+            if (data.school !== undefined) {
+                config.school = parseInt(data.school);
+                localStorage.setItem('athanSchool', config.school);
+                if (elements.athanSchoolSelect) elements.athanSchoolSelect.value = config.school;
+                fetchPrayerTimes();
+            }
+            break;
+            
+        default:
+            console.warn('Unknown remote action:', data.action);
     }
 }
 

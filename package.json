@@ -4,7 +4,7 @@
   "description": "Smart Athan Clock App",
   "main": "app.js",
   "scripts": {
-    "build": "mkdir -p www && cp index.html app.js style.css 1.mp3 www/ 2>/dev/null || cp index.html app.js style.css www/",
+    "build": "mkdir -p www && cp index.html remote.html app.js remote.js style.css 1.mp3 www/ 2>/dev/null || cp index.html remote.html app.js remote.js style.css www/",
     "sync": "npm run build && npx cap sync"
   },
   "dependencies": {

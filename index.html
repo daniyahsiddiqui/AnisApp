@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Fredoka+One&family=Nunito:wght@400;600;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body>
 
@@ -32,7 +33,8 @@
                 <span class="gregorian-date">Loading...</span>
                 <span class="hijri-date hijri">Loading...</span>
             </div>
-            <div style="display:flex; gap:0.5rem;">
+            <div style="display:flex; gap:0.5rem; align-items: center;">
+                <button class="icon-btn remote-btn" title="Remote Control" id="remote-control-btn" style="font-size: 1.2rem;">📶</button>
                 <button class="icon-btn mute-btn" title="Mute/Unmute Athan">🔊</button>
                 <button class="icon-btn settings-btn" title="Settings">⚙️</button>
             </div>
@@ -119,6 +121,7 @@
             <span class="joy-float" style="color:var(--joy-purple-light);">✦</span>
         </div>
 
+        <button class="joy-gear remote-btn" style="right: 106px;" aria-label="Remote Control" id="joyful-remote-control-btn">📶</button>
         <button class="joy-gear mute-btn" style="right: 60px;" aria-label="Mute/Unmute Athan">🔊</button>
         <button class="joy-gear settings-btn" aria-label="Settings">⚙️</button>
 
@@ -271,6 +274,44 @@
                     <option value="al-qatami">Nasser Al-Qatami</option>
                 </select>
                 <button id="test-athan-btn" class="joy-btn joy-btn-primary" style="flex:0; padding: 10px;" title="Test Adhan">🔊 Test</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remote Control Setup Modal -->
+    <div id="remote-modal" class="modal">
+        <div class="modal-box" style="text-align: center;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <span class="modal-title">📶 Remote Speaker Setup</span>
+                <button class="modal-close" id="close-remote">✕</button>
+            </div>
+            
+            <p style="font-size: 0.95rem; margin-bottom: 1.5rem; color: var(--text-secondary);">
+                Control this clock/speaker remotely from your phone or tablet.
+            </p>
+
+            <div style="background: rgba(0, 0, 0, 0.05); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                    Speaker Connection ID
+                </div>
+                <div id="remote-peer-id" style="font-size: 2rem; font-weight: 800; letter-spacing: 2px; color: var(--accent-color);">
+                    Generating...
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                    Status
+                </div>
+                <div id="remote-connection-status" style="font-weight: 700; color: #ef4444;">
+                    🔴 Not Connected
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <a id="remote-control-link" href="#" target="_blank" class="joy-btn joy-btn-primary" style="text-decoration: none; margin: 0 auto; width: 100%;">
+                    Open Remote Control Web Page
+                </a>
             </div>
         </div>
     </div>
