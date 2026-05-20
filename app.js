@@ -3,6 +3,7 @@ let config = {
     lat: 51.508515, 
     lng: -0.125487,
     method: parseInt(localStorage.getItem('athanMethod')) || 2, 
+    school: parseInt(localStorage.getItem('athanSchool')) || 0,
     locationName: "London, UK",
     theme: localStorage.getItem('theme') || 'gold',
     athanReciter: localStorage.getItem('athanReciter') || 'al-afasy',
@@ -67,6 +68,7 @@ const elements = {
     manualLocationInput: document.getElementById('manual-location-input'),
     saveLocationBtn: document.getElementById('save-location-btn'),
     athanMethodSelect: document.getElementById('athan-method-select'),
+    athanSchoolSelect: document.getElementById('athan-school-select'),
     
     hadithModal: document.getElementById('hadith-modal'),
     closeHadithBtn: document.getElementById('close-hadith-modal'),
@@ -81,6 +83,7 @@ async function init() {
     elements.athanSelect.value = config.athanReciter;
     elements.quranReciterSelect.value = config.quranReciter;
     if (elements.athanMethodSelect) elements.athanMethodSelect.value = config.method;
+    if (elements.athanSchoolSelect) elements.athanSchoolSelect.value = config.school;
     if (elements.manualLocationInput) elements.manualLocationInput.value = config.manualAddress;
     
     setupEventListeners();
@@ -132,6 +135,14 @@ function setupEventListeners() {
         elements.athanMethodSelect.addEventListener('change', (e) => {
             config.method = parseInt(e.target.value);
             localStorage.setItem('athanMethod', config.method);
+            fetchPrayerTimes();
+        });
+    }
+
+    if (elements.athanSchoolSelect) {
+        elements.athanSchoolSelect.addEventListener('change', (e) => {
+            config.school = parseInt(e.target.value);
+            localStorage.setItem('athanSchool', config.school);
             fetchPrayerTimes();
         });
     }
@@ -429,9 +440,9 @@ async function fetchPrayerTimes() {
     
     let apiUrl = '';
     if (config.manualAddress) {
-        apiUrl = `https://api.aladhan.com/v1/timingsByAddress/${timestamp}?address=${encodeURIComponent(config.manualAddress)}&method=${config.method}`;
+        apiUrl = `https://api.aladhan.com/v1/timingsByAddress/${timestamp}?address=${encodeURIComponent(config.manualAddress)}&method=${config.method}&school=${config.school}`;
     } else {
-        apiUrl = `https://api.aladhan.com/v1/timings/${timestamp}?latitude=${config.lat}&longitude=${config.lng}&method=${config.method}`;
+        apiUrl = `https://api.aladhan.com/v1/timings/${timestamp}?latitude=${config.lat}&longitude=${config.lng}&method=${config.method}&school=${config.school}`;
     }
     
     try {
