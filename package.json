@@ -1,0 +1,17 @@
+{
+  "name": "anisapp-athanclock",
+  "version": "1.0.0",
+  "description": "Smart Athan Clock App",
+  "main": "app.js",
+  "scripts": {
+    "build": "mkdir -p www && cp index.html app.js style.css 1.mp3 www/ 2>/dev/null || cp index.html app.js style.css www/",
+    "sync": "npm run build && npx cap sync"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/android": "^6.0.0"
+  }
+}

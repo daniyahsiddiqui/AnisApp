@@ -1,0 +1,8 @@
+{
+  "appId": "com.anisapp.athanclock",
+  "appName": "AnisApp",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
