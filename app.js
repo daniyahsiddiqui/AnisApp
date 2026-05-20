@@ -837,8 +837,6 @@ function stopQuran() {
     }
 }
 
-}
-
 // --- PeerJS P2P Remote Control Logic (Speaker Side) ---
 let peer = null;
 let peerConnection = null;
