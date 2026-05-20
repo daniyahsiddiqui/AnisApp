@@ -98,9 +98,13 @@ async function init() {
     updateClock();
     setInterval(updateClock, 1000);
     
-    await detectLocation();
-    await fetchPrayerTimes();
-    fetchSurahsList();
+    // Do location detection and timing fetch asynchronously without blocking UI or PeerJS registration
+    detectLocation()
+        .then(() => fetchPrayerTimes())
+        .catch(err => console.error("Initial location/time load failed:", err))
+        .finally(() => {
+            fetchSurahsList();
+        });
     
     // Refresh prayer times from API every 12 hours
     setInterval(fetchPrayerTimes, 12 * 60 * 60 * 1000);
@@ -231,8 +235,28 @@ function setupEventListeners() {
     // Autoplay Unlocker
     if (elements.unlockOverlay) {
         elements.unlockOverlay.addEventListener('click', () => {
-            elements.audio.play().then(() => elements.audio.pause()).catch(e => console.log("Unlock athan failed"));
-            elements.quranAudio.play().then(() => elements.quranAudio.pause()).catch(e => console.log("Unlock quran failed"));
+            try {
+                const playPromise = elements.audio.play();
+                if (playPromise !== undefined && typeof playPromise.then === 'function') {
+                    playPromise.then(() => elements.audio.pause()).catch(e => console.log("Unlock athan failed", e));
+                } else {
+                    elements.audio.pause();
+                }
+            } catch (e) {
+                console.log("Athan play unlock failed:", e);
+            }
+
+            try {
+                const quranPromise = elements.quranAudio.play();
+                if (quranPromise !== undefined && typeof quranPromise.then === 'function') {
+                    quranPromise.then(() => elements.quranAudio.pause()).catch(e => console.log("Unlock quran failed", e));
+                } else {
+                    elements.quranAudio.pause();
+                }
+            } catch (e) {
+                console.log("Quran play unlock failed:", e);
+            }
+
             elements.unlockOverlay.style.opacity = '0';
             setTimeout(() => elements.unlockOverlay.style.display = 'none', 500);
         });
@@ -564,7 +588,14 @@ function triggerAthan(prayerName) {
         if (!config.isMuted || prayerName === 'Test') {
             const url = adhanUrls[config.athanReciter] || adhanUrls['al-afasy'];
             elements.audio.src = url;
-            elements.audio.play().catch(e => console.error("Audio play blocked by browser. User must tap the screen to unlock autoplay first.", e));
+            try {
+                const playPromise = elements.audio.play();
+                if (playPromise !== undefined && typeof playPromise.catch === 'function') {
+                    playPromise.catch(e => console.error("Audio play blocked by browser. User must tap the screen to unlock autoplay first.", e));
+                }
+            } catch (e) {
+                console.error("Audio play blocked by browser. User must tap the screen to unlock autoplay first.", e);
+            }
         }
     }
 }
@@ -713,7 +744,11 @@ function startOrResumeQuran() {
     elements.fsPlayPauseBtn.innerHTML = '⏸';
     
     if (elements.quranAudio.src && elements.quranAudio.paused && elements.quranAudio.currentTime > 0 && currentQueueIndex < audioQueue.length) {
-        elements.quranAudio.play();
+        try {
+            elements.quranAudio.play();
+        } catch (e) {
+            console.error("Resume play failed:", e);
+        }
         updateStatusText();
     } else {
         playNextInQueue(false); 
@@ -732,17 +767,32 @@ function playNextInQueue(increment = true) {
 
     const currentItem = audioQueue[currentQueueIndex];
     elements.quranAudio.src = currentItem.url;
-    elements.quranAudio.play().then(() => {
-        updateStatusText();
-        
-        elements.fsArabicText.textContent = currentItem.text;
-        elements.fsSurahInfo.textContent = `${currentSurahData.englishName} - Ayah ${currentItem.ayahNum}`;
-    }).catch(e => {
-        console.error("Playback failed", e);
+    
+    try {
+        const playPromise = elements.quranAudio.play();
+        const handleSuccess = () => {
+            updateStatusText();
+            elements.fsArabicText.textContent = currentItem.text;
+            elements.fsSurahInfo.textContent = `${currentSurahData.englishName} - Ayah ${currentItem.ayahNum}`;
+        };
+        const handleFailure = (e) => {
+            console.error("Playback failed", e);
+            elements.fsStatusText.textContent = "Playback error";
+            elements.quranStatus.textContent = "Playback error";
+            stopQuran();
+        };
+
+        if (playPromise !== undefined && typeof playPromise.then === 'function') {
+            playPromise.then(handleSuccess).catch(handleFailure);
+        } else {
+            handleSuccess();
+        }
+    } catch (e) {
+        console.error("Synchronous playback error:", e);
         elements.fsStatusText.textContent = "Playback error";
         elements.quranStatus.textContent = "Playback error";
         stopQuran();
-    });
+    }
 }
 
 function updateStatusText() {
