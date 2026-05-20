@@ -177,6 +177,7 @@ function setupEventListeners() {
                 elements.audio.currentTime = 0;
                 elements.testAthanBtn.innerHTML = '🔊 Test';
                 currentAthanAudioType = 'none';
+                publishSpeakerStatus('idle', 'Speaker is Idle');
             } else {
                 triggerAthan('Test');
                 elements.testAthanBtn.innerHTML = '⏹ Stop';
@@ -187,6 +188,7 @@ function setupEventListeners() {
                 console.log("Adhan finished. Playing Dua after Adhan...");
                 currentAthanAudioType = 'dua';
                 elements.audio.src = 'https://archive.org/download/adhan.notifications/Dua_after_Adhan.mp3';
+                publishSpeakerStatus('playing_athan', 'Playing Dua after Adhan...');
                 try {
                     const playPromise = elements.audio.play();
                     if (playPromise !== undefined && typeof playPromise.catch === 'function') {
@@ -198,6 +200,7 @@ function setupEventListeners() {
             } else {
                 currentAthanAudioType = 'none';
                 elements.testAthanBtn.innerHTML = '🔊 Test';
+                publishSpeakerStatus('idle', 'Speaker is Idle');
             }
         });
     }
@@ -301,6 +304,7 @@ function setupEventListeners() {
             elements.audio.currentTime = 0;
             currentAthanAudioType = 'none';
             if (elements.testAthanBtn) elements.testAthanBtn.innerHTML = '🔊 Test';
+            publishSpeakerStatus('idle', 'Speaker is Idle');
         }
     });
 }
@@ -327,16 +331,24 @@ function setupVoiceRecognition() {
         isListening = true;
         UI.addClass('.voice-cmd-btn', 'listening');
         UI.setText('.voice-status', "Listening...");
+        publishSpeakerStatus('listening', 'Listening for voice command...');
     };
 
     recognition.onresult = async function(event) {
         const transcript = event.results[0][0].transcript.toLowerCase().trim();
         UI.setText('.voice-status', `Heard: "${transcript}"`);
+        publishSpeakerStatus('listening', `Heard: "${transcript}"`);
         handleVoiceCommand(transcript);
     };
 
     recognition.onerror = function(event) {
         UI.setText('.voice-status', `Voice Error: ${event.error}`);
+        publishSpeakerStatus('error', `Voice Error: ${event.error}`);
+        setTimeout(() => {
+            if (currentSpeakerState === 'error') {
+                publishSpeakerStatus('idle', 'Speaker is Idle');
+            }
+        }, 3000);
         stopListening();
     };
 
@@ -354,6 +366,9 @@ function stopListening() {
     isListening = false;
     UI.removeClass('.voice-cmd-btn', 'listening');
     if(recognition) recognition.stop();
+    if (currentSpeakerState === 'listening') {
+        publishSpeakerStatus('idle', 'Speaker is Idle');
+    }
     setTimeout(() => {
         if(!isListening) UI.setText('.voice-status', "");
     }, 3000);
@@ -395,6 +410,12 @@ async function handleVoiceCommand(cmd) {
             startOrResumeQuran();
         } else {
             UI.setText('.voice-status', `Surah not recognized.`);
+            publishSpeakerStatus('error', 'Surah not recognized.');
+            setTimeout(() => {
+                if (currentSpeakerState === 'error') {
+                    publishSpeakerStatus('idle', 'Speaker is Idle');
+                }
+            }, 3000);
         }
     } 
     else if (cmd === "play" || cmd === "play quran" || cmd === "resume") {
@@ -677,13 +698,18 @@ function triggerAthan(prayerName) {
             }
             elements.audio.src = url;
             currentAthanAudioType = 'athan';
+            publishSpeakerStatus('playing_athan', `Playing ${prayerName === 'Test' ? 'Test' : prayerName} Athan...`);
             try {
                 const playPromise = elements.audio.play();
                 if (playPromise !== undefined && typeof playPromise.catch === 'function') {
-                    playPromise.catch(e => console.error("Audio play blocked by browser. User must tap the screen to unlock autoplay first.", e));
+                    playPromise.catch(e => {
+                        console.error("Audio play blocked by browser. User must tap the screen to unlock autoplay first.", e);
+                        publishSpeakerStatus('error', 'Autoplay blocked. Tap speaker screen.');
+                    });
                 }
             } catch (e) {
                 console.error("Audio play blocked by browser. User must tap the screen to unlock autoplay first.", e);
+                publishSpeakerStatus('error', 'Autoplay blocked. Tap speaker screen.');
             }
         }
     }
@@ -714,6 +740,7 @@ async function loadSurahAudioData(surahNumber) {
     }
 
     elements.quranStatus.textContent = "Fetching audio data...";
+    publishSpeakerStatus('playing_quran', 'Fetching Quran audio data...');
     disableQuranUI();
 
     try {
@@ -727,12 +754,15 @@ async function loadSurahAudioData(surahNumber) {
             elements.quranPlayPause.disabled = false;
             elements.quranAyahFrom.disabled = false;
             elements.quranAyahTo.disabled = false;
+            publishSpeakerStatus('idle', 'Quran ready to play');
         } else {
             elements.quranStatus.textContent = "Audio unavailable for this reciter.";
+            publishSpeakerStatus('error', 'Audio unavailable for this reciter.');
         }
     } catch (e) {
         console.error("Failed to load full surah", e);
         elements.quranStatus.textContent = "Error loading audio.";
+        publishSpeakerStatus('error', 'Error loading Quran audio.');
     }
 }
 
@@ -868,6 +898,7 @@ function playNextInQueue(increment = true) {
             console.error("Playback failed", e);
             elements.fsStatusText.textContent = "Playback error";
             elements.quranStatus.textContent = "Playback error";
+            publishSpeakerStatus('error', 'Quran playback failed');
             stopQuran();
         };
 
@@ -880,6 +911,7 @@ function playNextInQueue(increment = true) {
         console.error("Synchronous playback error:", e);
         elements.fsStatusText.textContent = "Playback error";
         elements.quranStatus.textContent = "Playback error";
+        publishSpeakerStatus('error', 'Quran playback failed');
         stopQuran();
     }
 }
@@ -898,6 +930,10 @@ function updateStatusText() {
     
     elements.quranStatus.textContent = status;
     elements.fsStatusText.textContent = status;
+
+    // Publish speaker status
+    const detail = `${currentSurahData.englishName} - ${status}`;
+    publishSpeakerStatus('playing_quran', detail);
 }
 
 function pauseQuran() {
@@ -907,6 +943,7 @@ function pauseQuran() {
     elements.fsPlayPauseBtn.innerHTML = '▶️';
     elements.quranStatus.textContent = "Paused";
     elements.fsStatusText.textContent = "Paused";
+    publishSpeakerStatus('idle', 'Quran playback paused');
 }
 
 function stopQuran() {
@@ -924,12 +961,28 @@ function stopQuran() {
     if(currentSurahData) {
         elements.quranStatus.textContent = "Ready";
     }
+    publishSpeakerStatus('idle', 'Speaker is Idle');
 }
 
 // --- MQTT Remote Control Logic (Speaker Side) ---
 let mqttClient = null;
 let lastPingTime = 0;
 let pingCheckInterval = null;
+let currentShortId = null;
+let currentSpeakerState = 'idle';
+let currentSpeakerStateDetail = 'Speaker is Idle';
+
+function publishSpeakerStatus(speakerState, detail) {
+    currentSpeakerState = speakerState;
+    currentSpeakerStateDetail = detail;
+    if (mqttClient && mqttClient.connected && currentShortId) {
+        mqttClient.publish(`anisapp/athan/${currentShortId}/status`, JSON.stringify({
+            state: 'connected',
+            speakerState: currentSpeakerState,
+            detail: currentSpeakerStateDetail
+        }));
+    }
+}
 
 function initPeerServer() {
     if (mqttClient) return; // Already initialized
@@ -937,6 +990,7 @@ function initPeerServer() {
     // Generate a simple 5-digit number to make it easy to type on mobile
     const randCode = Math.floor(10000 + Math.random() * 90000);
     const shortId = String(randCode);
+    currentShortId = shortId;
     
     if (elements.remotePeerId) elements.remotePeerId.textContent = "Connecting...";
 
@@ -985,7 +1039,11 @@ function initPeerServer() {
             }
             lastPingTime = Date.now();
             updateRemoteStatus(true);
-            mqttClient.publish(`anisapp/athan/${shortId}/status`, JSON.stringify({ state: 'connected' }));
+            mqttClient.publish(`anisapp/athan/${shortId}/status`, JSON.stringify({
+                state: 'connected',
+                speakerState: currentSpeakerState,
+                detail: currentSpeakerStateDetail
+            }));
         } else if (topic.endsWith('/command')) {
             console.log("Received remote command:", payload);
             handleRemoteCommand(payload);

@@ -282,6 +282,47 @@
         .tab-content.active {
             display: flex;
         }
+        .speaker-status-bar {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-top: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #64748b; /* idle grey */
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        .status-dot.listening {
+            background-color: #ef4444; /* red */
+            box-shadow: 0 0 8px #ef4444;
+            animation: pulse 1.5s infinite;
+        }
+        .status-dot.playing_athan, .status-dot.playing_quran {
+            background-color: #3b82f6; /* blue */
+            box-shadow: 0 0 8px #3b82f6;
+            animation: pulse 2s infinite;
+        }
+        .status-dot.error {
+            background-color: #f59e0b; /* amber */
+            box-shadow: 0 0 8px #f59e0b;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
     </style>
 </head>
 <body>
@@ -313,6 +354,12 @@
             <div class="tabs-nav">
                 <button class="tab-btn" data-tab="tab-settings">🎛️ Settings</button>
                 <button class="tab-btn active" data-tab="tab-quran">📖 Play Quran</button>
+            </div>
+
+            <!-- Speaker Status Bar -->
+            <div class="speaker-status-bar">
+                <span id="speaker-status-dot" class="status-dot"></span>
+                <span id="speaker-status-text">Speaker is Idle</span>
             </div>
 
             <!-- Tab Content: Controls & Settings -->
@@ -362,7 +409,7 @@
 
                 <!-- Extra Commands -->
                 <div class="control-section" style="border: none; padding-bottom: 0;">
-                    <button id="remote-voice-btn" class="btn btn-secondary">🎙️ Trigger Voice Recognition</button>
+                    <button class="btn btn-secondary remote-voice-btn" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); color: #f87171; width: 100%;">🎙️ Voice Command</button>
                 </div>
             </div>
 
@@ -434,10 +481,11 @@
 
                 <!-- Action Buttons -->
                 <div class="control-section" style="border: none; padding-bottom: 0;">
-                    <div class="grid-2">
+                    <div class="grid-2" style="margin-bottom: 10px;">
                         <button id="remote-quran-play" class="btn btn-primary">▶️ Play Quran</button>
                         <button id="remote-quran-stop" class="btn btn-secondary">⏹️ Stop</button>
                     </div>
+                    <button class="btn btn-secondary remote-voice-btn" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); color: #f87171; width: 100%;">🎙️ Voice Command</button>
                 </div>
             </div>
         </div>

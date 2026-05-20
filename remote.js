@@ -18,7 +18,7 @@ const elements = {
     quranStop: document.getElementById('remote-quran-stop'),
     methodSelect: document.getElementById('remote-method-select'),
     schoolSelect: document.getElementById('remote-school-select'),
-    voiceBtn: document.getElementById('remote-voice-btn'),
+    voiceBtns: document.querySelectorAll('.remote-voice-btn'),
     swatches: document.querySelectorAll('.swatch'),
     
     // Quran Player settings selectors
@@ -168,6 +168,7 @@ function connectToSpeaker() {
                 updateStatus("Connected", "green");
                 showControlPanel(true);
                 setupRemoteControlActions();
+                updateSpeakerStatusUI(payload.speakerState, payload.detail);
             } else {
                 updateStatus("Connecting to Speaker...", "orange");
                 showControlPanel(false);
@@ -201,6 +202,22 @@ function handleDisconnect(reason) {
     }
     updateStatus(reason || "Disconnected", "red");
     showControlPanel(false);
+    updateSpeakerStatusUI('idle', 'Speaker is Idle');
+}
+
+function updateSpeakerStatusUI(speakerState, detail) {
+    const dot = document.getElementById('speaker-status-dot');
+    const text = document.getElementById('speaker-status-text');
+    if (!dot || !text) return;
+    
+    // Clear existing classes on dot
+    dot.className = 'status-dot';
+    
+    if (speakerState) {
+        dot.classList.add(speakerState);
+    }
+    
+    text.textContent = detail || 'Speaker is Idle';
 }
 
 function updateStatus(text, colorClass) {
@@ -262,7 +279,9 @@ function setupRemoteControlActions() {
     elements.schoolSelect.onchange = (e) => sendCommand({ action: 'change_school', school: e.target.value });
     
     // Voice command trigger
-    elements.voiceBtn.onclick = () => sendCommand({ action: 'trigger_voice' });
+    elements.voiceBtns.forEach(btn => {
+        btn.onclick = () => sendCommand({ action: 'trigger_voice' });
+    });
 
     // Theme swatches
     elements.swatches.forEach(swatch => {
