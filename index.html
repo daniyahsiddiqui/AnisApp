@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Athan Clock</title>
+    <!-- Modern Typography from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Fredoka+One&family=Nunito:wght@400;600;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Unlock Audio Overlay for Autoplay Policies -->
+    <div id="unlock-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--gradient-1); z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; color:var(--text-primary); cursor:pointer; transition:opacity 0.5s;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🕋</div>
+        <div style="font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px;">Tap anywhere to start clock</div>
+    </div>
+
+    <!-- ==========================================
+         CLASSIC LAYOUT (Sand, Rose, Gold)
+         ========================================== -->
+    <div id="classic-layout" class="app-container">
+        <!-- Header: Top bar with location and date -->
+        <header class="top-bar">
+            <div class="location-container">
+                <span class="icon">📍</span>
+                <span class="location-text">Loading Location...</span>
+            </div>
+            <div class="date-container">
+                <span class="gregorian-date">Loading...</span>
+                <span class="hijri-date hijri">Loading...</span>
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+                <button class="icon-btn mute-btn" title="Mute/Unmute Athan">🔊</button>
+                <button class="icon-btn settings-btn" title="Settings">⚙️</button>
+            </div>
+        </header>
+
+        <!-- Main Content: Current Time and Next Prayer Countdown -->
+        <main class="main-content">
+            <div class="time-display">
+                <h1 class="current-time">--:--</h1>
+                <span class="am-pm">--</span>
+            </div>
+            <div class="countdown-display">
+                <p>Next Prayer: <span class="next-prayer-name">--</span></p>
+                <h2 class="countdown-timer">--:--:--</h2>
+            </div>
+            <div class="action-buttons" style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button class="primary-btn open-quran-btn" style="margin-top: 0;">📖 Play Quran</button>
+                <button class="primary-btn open-hadith-btn" style="margin-top: 0; background: var(--card-bg); color: var(--text-primary); border: 1px solid var(--text-secondary);">📜 Daily Hadith</button>
+                <button class="icon-btn voice-cmd-btn" title="Voice Commands" style="font-size: 2rem; background: var(--card-bg); border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">🎙️</button>
+            </div>
+            <div class="voice-status" style="margin-top: 0.5rem; color: var(--accent-color); font-size: 0.9rem; min-height: 1.2em;"></div>
+        </main>
+
+        <!-- Footer: Prayer Times List -->
+        <footer class="prayer-times-list">
+            <div class="prayer-card card-fajr">
+                <span class="prayer-name">Fajr</span>
+                <span class="prayer-time time-fajr">--:--</span>
+            </div>
+            <div class="prayer-card card-sunrise">
+                <span class="prayer-name">Sunrise</span>
+                <span class="prayer-time time-sunrise">--:--</span>
+            </div>
+            <div class="prayer-card card-dhuhr">
+                <span class="prayer-name">Dhuhr</span>
+                <span class="prayer-time time-dhuhr">--:--</span>
+            </div>
+            <div class="prayer-card card-asr">
+                <span class="prayer-name">Asr</span>
+                <span class="prayer-time time-asr">--:--</span>
+            </div>
+            <div class="prayer-card card-maghrib">
+                <span class="prayer-name">Maghrib</span>
+                <span class="prayer-time time-maghrib">--:--</span>
+            </div>
+            <div class="prayer-card card-isha">
+                <span class="prayer-name">Isha</span>
+                <span class="prayer-time time-isha">--:--</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ==========================================
+         HADITH MODAL
+         ========================================== -->
+    <div id="hadith-modal" class="modal">
+        <div class="modal-box" style="max-width: 500px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 class="modal-title" style="margin: 0;">Hadith of the Day</h2>
+                <button class="modal-close" id="close-hadith-modal">&times;</button>
+            </div>
+            
+            <div id="hadith-content-container" style="background: rgba(0,0,0,0.05); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+                <p id="hadith-text" style="font-size: 1.1rem; line-height: 1.6; color: var(--text-primary); margin-bottom: 1rem;">Loading today's Hadith...</p>
+                <p id="hadith-reference" style="font-size: 0.9rem; font-weight: bold; color: var(--text-secondary); text-align: right; margin: 0;">Sahih al-Bukhari</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         JOYFUL LAYOUT (Theme Joyful)
+         ========================================== -->
+    <div id="joyful-layout">
+        <div class="joy-bg-layer" aria-hidden="true">
+            <span class="joy-float" style="color:var(--joy-pink-light);">★</span>
+            <span class="joy-float" style="color:var(--joy-purple-light);">✦</span>
+            <span class="joy-float" style="color:var(--joy-gold);">☽</span>
+            <span class="joy-float" style="color:var(--joy-pink-light);">★</span>
+            <span class="joy-float" style="color:var(--joy-purple-light);">✦</span>
+            <span class="joy-float" style="color:var(--joy-gold);">★</span>
+            <span class="joy-float" style="color:var(--joy-purple-light);">☽</span>
+            <span class="joy-float" style="color:var(--joy-pink-light);">✦</span>
+            <span class="joy-float" style="color:var(--joy-gold);">★</span>
+            <span class="joy-float" style="color:var(--joy-purple-light);">✦</span>
+        </div>
+
+        <button class="joy-gear mute-btn" style="right: 60px;" aria-label="Mute/Unmute Athan">🔊</button>
+        <button class="joy-gear settings-btn" aria-label="Settings">⚙️</button>
+
+        <main class="joy-screen">
+            <div class="joy-left-col">
+                <div class="joy-location">
+                    <span class="joy-location-pin">📍</span>
+                    <span class="location-text">Loading location...</span>
+                </div>
+
+                <div class="joy-bismillah" style="margin-top: 5px;">بِسْمِ اللَّهِ</div>
+
+                <svg class="joy-mosque" viewBox="0 0 220 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <ellipse cx="28" cy="22" rx="22" ry="12" fill="var(--joy-bg-from)" opacity="0.9"/>
+                    <ellipse cx="46" cy="18" rx="16" ry="10" fill="var(--joy-bg-from)" opacity="0.9"/>
+                    <ellipse cx="182" cy="25" rx="20" ry="11" fill="var(--joy-bg-to)" opacity="0.9"/>
+                    <ellipse cx="200" cy="21" rx="14" ry="9"  fill="var(--joy-bg-to)" opacity="0.9"/>
+                    <rect x="55"  y="60" width="110" height="36" rx="5" fill="var(--joy-purple-light)"/>
+                    <rect x="63"  y="52" width="94"  height="12" rx="3" fill="var(--joy-purple)"/>
+                    <ellipse cx="110" cy="52" rx="38" ry="22" fill="var(--joy-purple)"/>
+                    <path d="M72 52 Q110 26 148 52" fill="var(--joy-purple-dark)"/>
+                    <rect x="50" y="38" width="16" height="58" rx="3" fill="var(--joy-purple)"/>
+                    <ellipse cx="58" cy="38" rx="8" ry="14" fill="var(--joy-purple-dark)"/>
+                    <rect x="55" y="22" width="6" height="18" fill="var(--joy-purple-dark)"/>
+                    <polygon points="58,10 55,22 61,22" fill="var(--joy-gold)"/>
+                    <rect x="154" y="38" width="16" height="58" rx="3" fill="var(--joy-purple)"/>
+                    <ellipse cx="162" cy="38" rx="8" ry="14" fill="var(--joy-purple-dark)"/>
+                    <rect x="159" y="22" width="6" height="18" fill="var(--joy-purple-dark)"/>
+                    <polygon points="162,10 159,22 165,22" fill="var(--joy-gold)"/>
+                    <rect x="99" y="76" width="22" height="20" rx="11" ry="4" fill="var(--joy-purple-dark)"/>
+                    <ellipse cx="84"  cy="68" rx="8" ry="10" fill="var(--joy-white-glass)"/>
+                    <ellipse cx="136" cy="68" rx="8" ry="10" fill="var(--joy-white-glass)"/>
+                    <text x="104" y="52" font-size="12" fill="var(--joy-gold)">★</text>
+                    <text x="104" y="26" font-size="16" fill="var(--joy-gold)">☽</text>
+                    <rect x="44" y="94" width="132" height="6" rx="3" fill="var(--joy-white-glass)" opacity="0.7"/>
+                </svg>
+
+                <div class="joy-clock-wrap">
+                    <div class="joy-time current-time">--:--</div>
+                    <div class="joy-seconds current-seconds">--</div>
+                    <div class="joy-ampm am-pm">--</div>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-bottom:6px;">
+                    <div class="joy-hijri gregorian-date">Loading date...</div>
+                    <div class="joy-hijri hijri-date" style="color:var(--joy-pink);"></div>
+                </div>
+
+                <div class="joy-next">
+                    Next prayer: <span class="next-prayer-name">--</span> - <span class="countdown-timer">--:--:--</span>
+                </div>
+
+                <div class="joy-actions">
+                    <button class="joy-btn joy-btn-primary open-quran-btn">📖 Play Quran</button>
+                    <button class="joy-btn joy-btn-secondary open-hadith-btn">📜 Daily Hadith</button>
+                    <button class="joy-btn joy-btn-secondary voice-cmd-btn" style="max-width: 50px;">🎙️</button>
+                </div>
+                <div class="voice-status" style="margin-top: 0.2rem; color: var(--joy-pink); font-size: 0.8rem; min-height: 1.2em;"></div>
+            </div>
+
+            <div class="joy-right-col">
+                <div class="joy-prayers">
+                    <div class="joy-prayer-item card-fajr">
+                        <span class="joy-prayer-icon">🌅</span>
+                        <span class="joy-prayer-name">Fajr</span>
+                        <span class="joy-prayer-time time-fajr">--:--</span>
+                    </div>
+                    <div class="joy-prayer-item card-sunrise">
+                        <span class="joy-prayer-icon">☀️</span>
+                        <span class="joy-prayer-name">Sunrise</span>
+                        <span class="joy-prayer-time time-sunrise">--:--</span>
+                    </div>
+                    <div class="joy-prayer-item card-dhuhr">
+                        <span class="joy-prayer-icon">🌤️</span>
+                        <span class="joy-prayer-name">Dhuhr</span>
+                        <span class="joy-prayer-time time-dhuhr">--:--</span>
+                    </div>
+                    <div class="joy-prayer-item card-asr">
+                        <span class="joy-prayer-icon">🌥️</span>
+                        <span class="joy-prayer-name">Asr</span>
+                        <span class="joy-prayer-time time-asr">--:--</span>
+                    </div>
+                    <div class="joy-prayer-item card-maghrib">
+                        <span class="joy-prayer-icon">🌇</span>
+                        <span class="joy-prayer-name">Maghrib</span>
+                        <span class="joy-prayer-time time-maghrib">--:--</span>
+                    </div>
+                    <div class="joy-prayer-item card-isha">
+                        <span class="joy-prayer-icon">🌙</span>
+                        <span class="joy-prayer-name">Isha</span>
+                        <span class="joy-prayer-time time-isha">--:--</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Audio elements -->
+    <audio id="athan-audio" src="https://raw.githubusercontent.com/abodehq/Athan-MP3/master/Sounds/Athan%20Mishary%20Alafasi.mp3" preload="auto"></audio>
+    <audio id="quran-audio" preload="none"></audio>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-box">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <span class="modal-title">Settings</span>
+                <button class="modal-close" id="close-settings">✕</button>
+            </div>
+            
+            <div class="modal-label">Theme / Layout</div>
+            <div style="display:flex;gap:1rem;margin-bottom:1.5rem;">
+                <div class="theme-swatch" data-theme="joyful" style="background: linear-gradient(135deg, #F9A8D4, #7C3AED);" title="Joyful Theme (Dynamic)"></div>
+                <div class="theme-swatch" data-theme="sand" style="background: #fde68a;" title="Desert Sand (Classic)"></div>
+                <div class="theme-swatch" data-theme="rose" style="background: #fecdd3;" title="Rose Gold (Classic)"></div>
+                <div class="theme-swatch" data-theme="gold" style="background: #1a1a1a; border: 2px solid #eab308;" title="Midnight Gold (Classic)"></div>
+            </div>
+
+            <div class="modal-label">Location Override</div>
+            <div style="display:flex; gap: 10px; align-items: center; margin-bottom: 1.5rem;">
+                <input type="text" id="manual-location-input" class="modal-input" placeholder="e.g. Chicago, US" style="margin:0; flex:1;">
+                <button id="save-location-btn" class="joy-btn joy-btn-primary" style="flex:0; padding: 10px 15px;">Save</button>
+            </div>
+
+            <div class="modal-label">Athan Reciter</div>
+            <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem;">
+                <select id="athan-reciter-select" class="modal-select" style="flex: 1; margin: 0;">
+                    <option value="al-afasy">Mishary Alafasy</option>
+                    <option value="makkah">Makkah</option>
+                    <option value="abdul-basit">Abdul Basit</option>
+                    <option value="al-qatami">Nasser Al-Qatami</option>
+                </select>
+                <button id="test-athan-btn" class="joy-btn joy-btn-primary" style="flex:0; padding: 10px;" title="Test Adhan">🔊 Test</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quran Player Modal -->
+    <div id="quran-modal" class="modal">
+        <div class="modal-box">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <span class="modal-title">📖 Quran Player</span>
+                <button class="modal-close" id="close-quran">✕</button>
+            </div>
+            
+            <div class="modal-label">Reciter</div>
+            <select id="quran-reciter-select" class="modal-select">
+                <option value="ar.alafasy">Mishary Rashid Alafasy</option>
+                <option value="ar.abdulbasitmurattal">Abdul Basit Abdul Samad</option>
+                <option value="ar.abdurrahmaansudais">Abdurrahmaan As-Sudais</option>
+            </select>
+                
+            <div class="modal-label">Surah</div>
+            <select id="quran-surah-select" class="modal-select">
+                <option value="">Loading...</option>
+            </select>
+                
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div>
+                    <div class="modal-label">From Ayah</div>
+                    <select id="quran-ayah-from" class="modal-select" disabled><option>Surah first</option></select>
+                </div>
+                <div>
+                    <div class="modal-label">To Ayah</div>
+                    <select id="quran-ayah-to" class="modal-select" disabled><option>Surah first</option></select>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+                <div>
+                    <div class="modal-label">Ayah Repeat</div>
+                    <input type="number" id="quran-ayah-repeat" class="modal-input" value="1" min="1" max="100" style="margin:0;">
+                </div>
+                <div>
+                    <div class="modal-label">Range Repeat</div>
+                    <input type="number" id="quran-range-repeat" class="modal-input" value="1" min="1" max="100" style="margin:0;">
+                </div>
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:4px;">
+                <button id="quran-play-pause" class="joy-btn joy-btn-primary" style="flex:1" disabled>▶️ Play</button>
+                <button id="quran-stop" class="joy-btn joy-btn-secondary" style="flex:0; padding: 10px 15px;" title="Stop">⏹️</button>
+            </div>
+            
+            <div id="quran-status" style="margin-top:12px;text-align:center;font-size:13px;font-weight:700;color:var(--joy-purple);font-family:var(--joy-font-body);">
+                Ready to play ✨
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Screen Quran View -->
+    <div id="fullscreen-quran-view">
+        <div class="fs-header">
+            <button id="fs-close-btn" class="icon-btn" title="Close">✖</button>
+            <div id="fs-surah-info">Surah Information</div>
+        </div>
+        <div class="fs-content">
+            <div id="fs-arabic-text" class="arabic-text-large"></div>
+        </div>
+        <div class="fs-controls">
+            <button id="fs-play-pause-btn" class="icon-btn" style="font-size: 3rem;">⏸</button>
+            <div id="fs-status-text">Playing...</div>
+        </div>
+    </div>
+
+    <script src="app.js?v=5"></script>
+</body>
+</html>

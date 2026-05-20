@@ -1,0 +1,1211 @@
+/* Reset & Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* Joyful Variables */
+    --joy-bg-from: #FDE8F5;
+    --joy-bg-mid: #FFF3D6;
+    --joy-bg-to: #EAF1FF;
+    --joy-purple: #7C3AED;
+    --joy-purple-light: #C084FC;
+    --joy-purple-dark: #5B21B6;
+    --joy-pink: #DB2777;
+    --joy-pink-light: #F9A8D4;
+    --joy-gold: #FCD34D;
+    --joy-white-glass: rgba(255, 255, 255, 0.55);
+
+    --joy-font-display: 'Fredoka One', cursive;
+    --joy-font-body: 'Nunito', sans-serif;
+
+    /* Classic Default Variables (Desert Sand) */
+    --text-primary: #451a03;
+    --text-secondary: #78350f;
+    --accent-color: #d97706;
+    --card-bg: rgba(254, 243, 199, 0.6);
+    --active-prayer-bg: rgba(217, 119, 6, 0.15);
+    --active-prayer-border: #d97706;
+    --gradient-1: #fef3c7;
+    --gradient-2: #fde68a;
+    --modal-bg: rgba(254, 243, 199, 0.95);
+}
+
+body.theme-sand {
+    --text-primary: #451a03;
+    --text-secondary: #78350f;
+    --accent-color: #d97706;
+    --card-bg: rgba(254, 243, 199, 0.6);
+    --active-prayer-bg: rgba(217, 119, 6, 0.15);
+    --active-prayer-border: #d97706;
+    --gradient-1: #fef3c7;
+    --gradient-2: #fde68a;
+    --modal-bg: rgba(254, 243, 199, 0.95);
+}
+
+body.theme-rose {
+    --text-primary: #4c0519;
+    --text-secondary: #881337;
+    --accent-color: #e11d48;
+    --card-bg: rgba(255, 228, 230, 0.6);
+    --active-prayer-bg: rgba(225, 29, 72, 0.15);
+    --active-prayer-border: #e11d48;
+    --gradient-1: #fff1f2;
+    --gradient-2: #fecdd3;
+    --modal-bg: rgba(255, 228, 230, 0.95);
+}
+
+body.theme-gold {
+    --text-primary: #fef08a;
+    --text-secondary: #fde047;
+    --accent-color: #eab308;
+    --card-bg: rgba(30, 30, 30, 0.7);
+    --active-prayer-bg: rgba(234, 179, 8, 0.15);
+    --active-prayer-border: #eab308;
+    --gradient-1: #1a1a1a;
+    --gradient-2: #2d2a26;
+    --modal-bg: rgba(26, 26, 26, 0.95);
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+}
+
+body.theme-joyful {
+    font-family: var(--joy-font-body);
+    background: linear-gradient(160deg, var(--joy-bg-from) 0%, var(--joy-bg-mid) 50%, var(--joy-bg-to) 100%);
+}
+
+/* ==========================================
+   DUAL-LAYOUT TOGGLE LOGIC
+   ========================================== */
+body.theme-joyful #classic-layout {
+    display: none !important;
+}
+
+body:not(.theme-joyful) #joyful-layout {
+    display: none !important;
+}
+
+
+/* ==========================================
+   CLASSIC LAYOUT CSS
+   ========================================== */
+.app-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 2rem;
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.2rem;
+    font-weight: 300;
+}
+
+.location-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.date-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.hijri {
+    color: var(--accent-color);
+    font-size: 1rem;
+    font-weight: 400;
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    text-align: center;
+}
+
+.time-display {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.current-time {
+    font-size: clamp(5rem, 12vw, 8rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -2px;
+}
+
+.am-pm {
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.countdown-display {
+    background: var(--card-bg);
+    padding: 1.5rem 3rem;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    animation: classicPulse 4s infinite alternate;
+}
+
+.countdown-display p {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+}
+
+.next-prayer-name {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+.countdown-timer {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.prayer-times-list {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    width: 100%;
+}
+
+.prayer-card {
+    flex: 1;
+    min-width: 130px;
+    background: var(--card-bg);
+    padding: 1.5rem 1rem;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.prayer-card.active {
+    background: var(--active-prayer-bg);
+    border-color: var(--active-prayer-border);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(56, 189, 248, 0.2);
+}
+
+.prayer-name {
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+}
+
+.prayer-card.active .prayer-name {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+.prayer-time {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+@keyframes classicPulse {
+    0% {
+        box-shadow: 0 0 0 0 var(--active-prayer-bg);
+    }
+
+    100% {
+        box-shadow: 0 0 20px 5px var(--active-prayer-bg);
+    }
+}
+
+.primary-btn {
+    background: var(--card-bg);
+    color: var(--accent-color);
+    border: 1px solid var(--active-prayer-border);
+    padding: 0.8rem 2rem;
+    border-radius: 30px;
+    font-size: 1.2rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 2rem;
+}
+
+.primary-btn:hover:not(:disabled) {
+    background: var(--active-prayer-bg);
+    transform: translateY(-2px);
+}
+
+.primary-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: var(--text-secondary);
+    color: var(--text-secondary);
+}
+
+
+/* ==========================================
+   JOYFUL LAYOUT — PORTRAIT (default)
+   ========================================== */
+
+/* Floating background stars/moons */
+.joy-bg-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.joy-bg-layer .joy-float {
+    position: absolute;
+    font-size: 20px;
+    animation: joyFloat 4s ease-in-out infinite alternate;
+    user-select: none;
+}
+
+.joy-bg-layer .joy-float:nth-child(1) {
+    top: 4%;
+    left: 5%;
+    font-size: 22px;
+    animation-delay: 0.0s;
+}
+
+.joy-bg-layer .joy-float:nth-child(2) {
+    top: 8%;
+    left: 35%;
+    font-size: 14px;
+    animation-delay: 0.5s;
+}
+
+.joy-bg-layer .joy-float:nth-child(3) {
+    top: 5%;
+    right: 8%;
+    font-size: 18px;
+    animation-delay: 1.1s;
+}
+
+.joy-bg-layer .joy-float:nth-child(4) {
+    top: 20%;
+    left: 2%;
+    font-size: 13px;
+    animation-delay: 1.7s;
+}
+
+.joy-bg-layer .joy-float:nth-child(5) {
+    top: 18%;
+    right: 4%;
+    font-size: 16px;
+    animation-delay: 0.3s;
+}
+
+.joy-bg-layer .joy-float:nth-child(6) {
+    top: 35%;
+    left: 90%;
+    font-size: 12px;
+    animation-delay: 2.0s;
+}
+
+.joy-bg-layer .joy-float:nth-child(7) {
+    top: 55%;
+    left: 3%;
+    font-size: 11px;
+    animation-delay: 0.8s;
+}
+
+.joy-bg-layer .joy-float:nth-child(8) {
+    top: 70%;
+    right: 6%;
+    font-size: 15px;
+    animation-delay: 1.4s;
+}
+
+.joy-bg-layer .joy-float:nth-child(9) {
+    top: 85%;
+    left: 20%;
+    font-size: 13px;
+    animation-delay: 0.6s;
+}
+
+.joy-bg-layer .joy-float:nth-child(10) {
+    top: 80%;
+    right: 25%;
+    font-size: 17px;
+    animation-delay: 1.9s;
+}
+
+@keyframes joyFloat {
+    from {
+        opacity: 0.25;
+        transform: scale(0.85) rotate(-6deg);
+    }
+
+    to {
+        opacity: 0.70;
+        transform: scale(1.12) rotate(6deg);
+    }
+}
+
+/* Root joyful layout container */
+#joyful-layout {
+    min-height: 100vh;
+    position: relative;
+}
+
+/* The gear button sits fixed over the layout */
+.joy-gear {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    width: 38px;
+    height: 38px;
+    background: var(--joy-white-glass);
+    border: 1.5px solid rgba(168, 85, 247, 0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    z-index: 50;
+    transition: transform 0.3s;
+    backdrop-filter: blur(6px);
+}
+
+.joy-gear:hover {
+    transform: rotate(45deg);
+}
+
+/* Main screen: portrait = single column */
+.joy-screen {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 100dvh;
+    padding: 14px 14px 20px;
+    gap: 0;
+}
+
+/* In portrait the two cols stack vertically */
+.joy-left-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 8px;
+}
+
+.joy-right-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 0;
+}
+
+/* Location pill */
+.joy-location {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--joy-white-glass);
+    border: 1.5px solid rgba(168, 85, 247, 0.25);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-family: var(--joy-font-body);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--joy-purple);
+    margin-bottom: 8px;
+    align-self: stretch;
+    justify-content: center;
+    /* Leave room for gear button */
+    margin-right: 44px;
+}
+
+.joy-location-pin {
+    font-size: 14px;
+}
+
+/* Bismillah */
+.joy-bismillah {
+    font-family: serif;
+    font-size: 20px;
+    color: var(--joy-purple);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    text-align: center;
+}
+
+/* Mosque SVG */
+.joy-mosque {
+    width: min(190px, 52vw);
+    flex-shrink: 0;
+    margin: 2px 0 4px;
+}
+
+/* Clock */
+.joy-clock-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+/* Override .current-time for joyful — must sit after the classic rule */
+body.theme-joyful .current-time {
+    font-family: var(--joy-font-display);
+    font-size: clamp(52px, 15vw, 76px);
+    font-weight: 400;
+    /* Fredoka One is already heavy */
+    letter-spacing: 3px;
+    line-height: 1;
+    color: var(--joy-purple-dark);
+    text-shadow: 4px 4px 0 var(--joy-pink-light), 7px 7px 0 rgba(91, 33, 182, 0.12);
+}
+
+/* .joy-time is the same element as .current-time — keep for specificity */
+.joy-time {
+    font-family: var(--joy-font-display);
+    font-size: clamp(52px, 15vw, 76px);
+    color: var(--joy-purple-dark);
+    letter-spacing: 3px;
+    line-height: 1;
+    text-shadow: 4px 4px 0 var(--joy-pink-light), 7px 7px 0 rgba(91, 33, 182, 0.12);
+}
+
+/* Seconds */
+.joy-seconds {
+    font-family: var(--joy-font-body);
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--joy-purple-light);
+    letter-spacing: 4px;
+    margin: -2px 0 0;
+    /* Override the classic .current-seconds if it exists */
+    line-height: 1.1;
+}
+
+/* AM/PM — override classic */
+body.theme-joyful .am-pm {
+    font-family: var(--joy-font-body);
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--joy-pink);
+    margin: 2px 0 6px;
+    letter-spacing: 0.5px;
+    /* Reset classic sizing */
+    line-height: 1.2;
+}
+
+.joy-ampm {
+    font-family: var(--joy-font-body);
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--joy-pink);
+    margin: 2px 0 6px;
+    letter-spacing: 0.5px;
+}
+
+/* Date badges */
+.joy-hijri {
+    font-family: var(--joy-font-body);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--joy-purple-light);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* Next-prayer pill — contains .next-prayer-name and .countdown-timer spans */
+.joy-next {
+    background: linear-gradient(135deg, var(--joy-purple) 0%, var(--joy-pink) 100%);
+    border-radius: 24px;
+    padding: 8px 20px;
+    color: #fff;
+    font-family: var(--joy-font-body);
+    font-size: 13px;
+    font-weight: 800;
+    margin: 6px 0 10px;
+    text-align: center;
+    letter-spacing: 0.3px;
+    align-self: stretch;
+}
+
+/* Override classic countdown colours inside joyful pill */
+body.theme-joyful .next-prayer-name {
+    color: #fff;
+    font-weight: 800;
+}
+
+body.theme-joyful .countdown-timer {
+    font-size: 13px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.9);
+    font-family: var(--joy-font-body);
+}
+
+/* Action buttons */
+.joy-actions {
+    display: flex;
+    gap: 10px;
+    margin: 6px 0 4px;
+    width: 100%;
+    justify-content: center;
+}
+
+.joy-btn {
+    flex: 1;
+    max-width: 160px;
+    padding: 10px 16px;
+    border-radius: 16px;
+    border: none;
+    cursor: pointer;
+    font-family: var(--joy-font-body);
+    font-size: 13px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.joy-btn:active {
+    transform: scale(0.95);
+}
+
+.joy-btn-primary {
+    background: var(--joy-purple);
+    color: #fff;
+}
+
+.joy-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.joy-btn-secondary {
+    background: var(--joy-white-glass);
+    border: 1.5px solid rgba(168, 85, 247, 0.3);
+    color: var(--joy-purple);
+}
+
+.joy-btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ---- Prayer times grid (portrait: 3 columns) ---- */
+.joy-prayers {
+    width: 100%;
+    background: var(--joy-white-glass);
+    border: 1.5px solid rgba(168, 85, 247, 0.2);
+    border-radius: 20px;
+    padding: 12px 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-top: 8px;
+    backdrop-filter: blur(4px);
+}
+
+.joy-prayer-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 7px 4px;
+    border-radius: 12px;
+    transition: background 0.2s;
+}
+
+.joy-prayer-item.active {
+    background: rgba(168, 85, 247, 0.15);
+    outline: 1.5px solid rgba(168, 85, 247, 0.4);
+    animation: joyfulPulse 4s infinite alternate;
+}
+
+@keyframes joyfulPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4);
+    }
+
+    100% {
+        box-shadow: 0 0 20px 5px rgba(168, 85, 247, 0.1);
+    }
+}
+
+.joy-prayer-icon {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.joy-prayer-name {
+    font-family: var(--joy-font-body);
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--joy-purple);
+}
+
+.joy-prayer-time {
+    font-family: var(--joy-font-display);
+    font-size: 13px;
+    color: var(--joy-pink);
+}
+
+.joy-prayer-item.active .joy-prayer-name {
+    color: var(--joy-purple-dark);
+}
+
+.joy-prayer-item.active .joy-prayer-time {
+    color: var(--joy-purple-dark);
+}
+
+
+/* ==========================================
+   JOYFUL LAYOUT — LANDSCAPE
+   Two-column split: clock left | prayers right
+   ========================================== */
+@media (orientation: landscape) {
+
+    /* Trim bg floats so short screens aren't cluttered */
+    .joy-bg-layer .joy-float:nth-child(n+6) {
+        display: none;
+    }
+
+    .joy-screen {
+        flex-direction: row;
+        align-items: stretch;
+        min-height: 100dvh;
+        padding: 10px 52px 10px 12px;
+        /* right padding clears fixed gear btn */
+        gap: 0;
+    }
+
+    /* LEFT: clock, mosque, bismillah, dates, next prayer, actions */
+    .joy-left-col {
+        flex: 0 0 45%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        padding: 8px 12px 8px 8px;
+        border-right: 2px dashed rgba(168, 85, 247, 0.2);
+        overflow: hidden;
+    }
+
+    /* RIGHT: prayer grid only */
+    .joy-right-col {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 8px 8px 8px 12px;
+    }
+
+    /* Location pill — full width of left col */
+    .joy-location {
+        align-self: stretch;
+        margin-right: 0;
+        margin-bottom: 4px;
+        font-size: 11px;
+        padding: 4px 10px;
+    }
+
+    /* Shrink mosque in landscape */
+    .joy-mosque {
+        width: min(120px, 22vw);
+        margin: 2px 0;
+    }
+
+    .joy-bismillah {
+        font-size: 16px;
+        margin-bottom: 2px;
+    }
+
+    /* Smaller clock in landscape */
+    body.theme-joyful .current-time,
+    .joy-time {
+        font-size: clamp(38px, 8vw, 60px);
+        text-shadow: 3px 3px 0 var(--joy-pink-light), 5px 5px 0 rgba(91, 33, 182, 0.1);
+    }
+
+    .joy-seconds {
+        font-size: 18px;
+        letter-spacing: 3px;
+    }
+
+    body.theme-joyful .am-pm,
+    .joy-ampm {
+        font-size: 13px;
+        margin: 1px 0 4px;
+    }
+
+    .joy-hijri {
+        font-size: 10px;
+    }
+
+    .joy-next {
+        align-self: stretch;
+        margin: 4px 0 6px;
+        padding: 6px 14px;
+        font-size: 12px;
+    }
+
+    /* Actions: stack vertically in narrow left col */
+    .joy-actions {
+        flex-direction: column;
+        margin: 4px 0 0;
+        width: 100%;
+        gap: 6px;
+    }
+
+    .joy-btn {
+        max-width: 100%;
+        padding: 8px 14px;
+        font-size: 12px;
+    }
+
+    /* Prayer grid: single column, row per prayer */
+    .joy-prayers {
+        grid-template-columns: 1fr;
+        gap: 5px;
+        background: transparent;
+        border: none;
+        padding: 0;
+        margin-top: 0;
+        height: 100%;
+        align-content: center;
+    }
+
+    /* Each prayer item: horizontal row */
+    .joy-prayer-item {
+        flex-direction: row;
+        gap: 10px;
+        padding: 7px 12px;
+        background: var(--joy-white-glass);
+        border: 1.5px solid rgba(168, 85, 247, 0.15);
+        border-radius: 14px;
+        justify-content: flex-start;
+        backdrop-filter: blur(4px);
+    }
+
+    .joy-prayer-item.active {
+        background: rgba(168, 85, 247, 0.15);
+        border-color: rgba(168, 85, 247, 0.45);
+    }
+
+    .joy-prayer-icon {
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    .joy-prayer-name {
+        flex: 1;
+        text-align: left;
+        font-size: 11px;
+        letter-spacing: 1px;
+    }
+
+    .joy-prayer-time {
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+
+    .joy-prayer-item.active .joy-prayer-name {
+        color: var(--joy-purple-dark);
+    }
+
+    .joy-prayer-item.active .joy-prayer-time {
+        color: var(--joy-purple-dark);
+        font-size: 15px;
+    }
+
+    /* Voice status label */
+    .voice-status {
+        font-size: 0.75rem;
+    }
+}
+
+/* Very short landscape screens (e.g. iPhone SE landscape) */
+@media (orientation: landscape) and (max-height: 420px) {
+    .joy-mosque {
+        display: none;
+    }
+
+    .joy-bismillah {
+        display: none;
+    }
+
+    .joy-seconds {
+        display: none;
+    }
+
+    .joy-hijri {
+        display: none;
+    }
+
+    body.theme-joyful .current-time,
+    .joy-time {
+        font-size: clamp(34px, 9vw, 52px);
+    }
+
+    .joy-next {
+        padding: 5px 10px;
+        font-size: 11px;
+        margin: 2px 0 4px;
+    }
+
+    .joy-btn {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    .joy-prayer-item {
+        padding: 5px 10px;
+    }
+
+    .joy-prayer-icon {
+        font-size: 16px;
+    }
+
+    .joy-prayer-time {
+        font-size: 13px;
+    }
+}
+
+
+/* ==========================================
+   SHARED MODALS & OVERLAYS
+   ========================================== */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(6px);
+}
+
+body.theme-joyful .modal {
+    background: rgba(91, 33, 182, 0.35);
+}
+
+.modal.open {
+    display: flex;
+}
+
+.modal-box {
+    background: var(--modal-bg);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 24px 20px;
+    font-family: inherit;
+    width: min(360px, 92vw);
+    max-height: 88vh;
+    overflow-y: auto;
+}
+
+body.theme-joyful .modal-box {
+    background: var(--joy-bg-mid);
+    border: 2px solid rgba(168, 85, 247, 0.3);
+    font-family: var(--joy-font-body);
+}
+
+.modal-title {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+body.theme-joyful .modal-title {
+    font-family: var(--joy-font-display);
+    font-size: 22px;
+    color: var(--joy-purple-dark);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.modal-close:hover {
+    color: var(--accent-color);
+}
+
+body.theme-joyful .modal-close {
+    background: rgba(168, 85, 247, 0.12);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    color: var(--joy-purple);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.theme-joyful .modal-close:hover {
+    color: var(--joy-pink);
+}
+
+.modal-label {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    display: block;
+}
+
+body.theme-joyful .modal-label {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--joy-purple-light);
+    margin-bottom: 6px;
+}
+
+.modal-select,
+.modal-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--text-secondary);
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text-primary);
+    background: var(--card-bg);
+    outline: none;
+    margin-bottom: 12px;
+    -webkit-appearance: none;
+}
+
+.modal-select:focus,
+.modal-input:focus {
+    border-color: var(--accent-color);
+}
+
+body.theme-joyful .modal-select,
+body.theme-joyful .modal-input {
+    border: 1.5px solid rgba(168, 85, 247, 0.25);
+    font-family: var(--joy-font-body);
+    font-weight: 600;
+    color: var(--joy-purple-dark);
+    background: var(--joy-white-glass);
+}
+
+body.theme-joyful .modal-select:focus,
+body.theme-joyful .modal-input:focus {
+    border-color: var(--joy-purple);
+}
+
+/* Theme swatches */
+.theme-swatch {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.3s;
+}
+
+.theme-swatch.active {
+    border-color: var(--accent-color);
+}
+
+body.theme-joyful .theme-swatch.active {
+    border-color: var(--joy-purple-dark);
+    transform: scale(1.15);
+}
+
+.theme-swatch:hover {
+    transform: scale(1.1);
+}
+
+/* Icon buttons (gear, voice, close in fullscreen) */
+.icon-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: color 0.3s;
+}
+
+.icon-btn:hover {
+    color: var(--accent-color);
+}
+
+body.theme-joyful .icon-btn {
+    color: var(--joy-purple);
+}
+
+body.theme-joyful .icon-btn:hover {
+    color: var(--joy-pink);
+}
+
+/* Voice listening animation */
+.voice-cmd-btn.listening {
+    animation: pulse-red 1.5s infinite;
+    border-color: #ef4444;
+}
+
+@keyframes pulse-red {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+
+    100% {
+        box-shadow: 0 0 20px 10px rgba(239, 68, 68, 0);
+    }
+}
+
+/* Voice status text */
+.voice-status {
+    margin-top: 0.2rem;
+    color: var(--joy-pink);
+    font-size: 0.8rem;
+    min-height: 1.2em;
+    text-align: center;
+}
+
+
+/* ==========================================
+   FULL-SCREEN QURAN VIEW
+   ========================================== */
+#fullscreen-quran-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    color: var(--text-primary);
+}
+
+body.theme-joyful #fullscreen-quran-view {
+    background: linear-gradient(135deg, var(--joy-bg-from), var(--joy-bg-to));
+    color: var(--joy-purple-dark);
+}
+
+#fullscreen-quran-view.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.fs-header {
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#fs-surah-info {
+    font-size: 1.3rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+body.theme-joyful #fs-surah-info {
+    color: var(--joy-purple-dark);
+    font-weight: 800;
+    font-family: var(--joy-font-display);
+}
+
+.fs-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 2rem;
+    overflow-y: auto;
+}
+
+.arabic-text-large {
+    font-family: 'Amiri', serif;
+    font-size: clamp(2.5rem, 8vw, 6rem);
+    line-height: 1.6;
+    text-align: center;
+    direction: rtl;
+    color: var(--accent-color);
+    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    max-width: 90%;
+    transition: opacity 0.3s ease;
+}
+
+body.theme-joyful .arabic-text-large {
+    color: var(--joy-purple-dark);
+    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.fs-controls {
+    padding: 1.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+body.theme-joyful .fs-controls {
+    background: var(--joy-white-glass);
+    backdrop-filter: blur(8px);
+}
+
+#fs-status-text {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+}
+
+body.theme-joyful #fs-status-text {
+    color: var(--joy-purple);
+    font-weight: 700;
+    font-family: var(--joy-font-body);
+}
