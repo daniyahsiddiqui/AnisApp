@@ -23,6 +23,7 @@ let isQuranPlaying = false;
 let audioQueue = [];
 let currentQueueIndex = 0;
 let currentAthanAudioType = 'none'; // 'athan', 'dua', or 'none'
+let wakeLock = null;
 
 // Voice State
 let recognition = null;
@@ -109,6 +110,9 @@ async function init() {
     
     // Refresh prayer times from API every 12 hours
     setInterval(fetchPrayerTimes, 12 * 60 * 60 * 1000);
+
+    // Request wake lock on startup
+    requestWakeLock();
 }
 
 function setupEventListeners() {
@@ -272,6 +276,12 @@ function setupEventListeners() {
                 }
             } catch (e) {
                 console.log("Quran play unlock failed:", e);
+            }
+
+            try {
+                requestWakeLock();
+            } catch (e) {
+                console.log("Wake lock request failed during unlock:", e);
             }
 
             elements.unlockOverlay.style.opacity = '0';
@@ -1117,6 +1127,30 @@ function handleRemoteCommand(data) {
             console.warn('Unknown remote action:', data.action);
     }
 }
+
+// --- Screen Wake Lock Helper ---
+async function requestWakeLock() {
+    if (!('wakeLock' in navigator)) {
+        console.log('Screen Wake Lock API is not supported in this browser.');
+        return;
+    }
+    try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        console.log('Wake Lock acquired successfully.');
+        wakeLock.addEventListener('release', () => {
+            console.log('Wake Lock was released.');
+        });
+    } catch (err) {
+        console.error(`Failed to acquire Wake Lock: ${err.name}, ${err.message}`);
+    }
+}
+
+// Re-request wake lock when page becomes visible
+document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible') {
+        await requestWakeLock();
+    }
+});
 
 // Start app
 init();
