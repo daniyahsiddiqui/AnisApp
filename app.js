@@ -22,6 +22,7 @@ let currentSurahData = null;
 let isQuranPlaying = false;
 let audioQueue = [];
 let currentQueueIndex = 0;
+let currentAthanAudioType = 'none'; // 'athan', 'dua', or 'none'
 
 // Voice State
 let recognition = null;
@@ -171,13 +172,29 @@ function setupEventListeners() {
                 elements.audio.pause();
                 elements.audio.currentTime = 0;
                 elements.testAthanBtn.innerHTML = '🔊 Test';
+                currentAthanAudioType = 'none';
             } else {
                 triggerAthan('Test');
                 elements.testAthanBtn.innerHTML = '⏹ Stop';
             }
         });
         elements.audio.addEventListener('ended', () => {
-            elements.testAthanBtn.innerHTML = '🔊 Test';
+            if (currentAthanAudioType === 'athan') {
+                console.log("Adhan finished. Playing Dua after Adhan...");
+                currentAthanAudioType = 'dua';
+                elements.audio.src = 'https://archive.org/download/adhan.notifications/Dua_after_Adhan.mp3';
+                try {
+                    const playPromise = elements.audio.play();
+                    if (playPromise !== undefined && typeof playPromise.catch === 'function') {
+                        playPromise.catch(e => console.error("Dua play blocked by browser", e));
+                    }
+                } catch (e) {
+                    console.error("Dua play blocked by browser", e);
+                }
+            } else {
+                currentAthanAudioType = 'none';
+                elements.testAthanBtn.innerHTML = '🔊 Test';
+            }
         });
     }
     
@@ -272,6 +289,7 @@ function setupEventListeners() {
         if (config.isMuted && !elements.audio.paused) {
             elements.audio.pause();
             elements.audio.currentTime = 0;
+            currentAthanAudioType = 'none';
             if (elements.testAthanBtn) elements.testAthanBtn.innerHTML = '🔊 Test';
         }
     });
@@ -631,11 +649,24 @@ const adhanUrls = {
     'al-qatami': 'https://raw.githubusercontent.com/abodehq/Athan-MP3/master/Sounds/Athan%20Nasser%20Alqatami.mp3'
 };
 
+const fajrAdhanUrls = {
+    'al-afasy': 'https://archive.org/download/adhan.notifications/Mishary_Rashid_al_Afasy_Fajr_Adhan.mp3',
+    'makkah': 'https://raw.githubusercontent.com/abodehq/Athan-MP3/master/Sounds/Athan%20Al-fajer%20-%20Malek%20chebae.mp3',
+    'abdul-basit': 'https://raw.githubusercontent.com/abodehq/Athan-MP3/master/Sounds/Athan%20Al-fajer%20-%20Malek%20chebae.mp3',
+    'al-qatami': 'https://raw.githubusercontent.com/abodehq/Athan-MP3/master/Sounds/Athan%20Al-fajer%20-%20Malek%20chebae.mp3'
+};
+
 function triggerAthan(prayerName) {
     if (prayerName !== 'Sunrise') {
         if (!config.isMuted || prayerName === 'Test') {
-            const url = adhanUrls[config.athanReciter] || adhanUrls['al-afasy'];
+            let url;
+            if (prayerName === 'Fajr') {
+                url = fajrAdhanUrls[config.athanReciter] || fajrAdhanUrls['al-afasy'];
+            } else {
+                url = adhanUrls[config.athanReciter] || adhanUrls['al-afasy'];
+            }
             elements.audio.src = url;
+            currentAthanAudioType = 'athan';
             try {
                 const playPromise = elements.audio.play();
                 if (playPromise !== undefined && typeof playPromise.catch === 'function') {
