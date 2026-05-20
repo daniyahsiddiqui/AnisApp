@@ -19,12 +19,43 @@ const elements = {
     methodSelect: document.getElementById('remote-method-select'),
     schoolSelect: document.getElementById('remote-school-select'),
     voiceBtn: document.getElementById('remote-voice-btn'),
-    swatches: document.querySelectorAll('.swatch')
+    swatches: document.querySelectorAll('.swatch'),
+    
+    // Quran Player settings selectors
+    reciterSelect: document.getElementById('remote-reciter-select'),
+    ayahFromSelect: document.getElementById('remote-ayah-from'),
+    ayahToSelect: document.getElementById('remote-ayah-to'),
+    ayahRepeatSelect: document.getElementById('remote-ayah-repeat'),
+    rangeRepeatSelect: document.getElementById('remote-range-repeat')
 };
 
 // Auto-fill and connect if ID is provided in query string
 window.addEventListener('DOMContentLoaded', () => {
     fetchSurahsList();
+    
+    // Tab switching setup
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const tabId = e.currentTarget.dataset.tab;
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(tBtn => {
+                tBtn.classList.remove('active');
+            });
+            
+            document.getElementById(tabId).classList.add('active');
+            e.currentTarget.classList.add('active');
+        });
+    });
+
+    // Dynamic Ayah population
+    if (elements.surahSelect) {
+        elements.surahSelect.addEventListener('change', (e) => {
+            populateAyahOptions(e.target.value);
+        });
+    }
     
     const urlParams = new URLSearchParams(window.location.search);
     const peerIdParam = urlParams.get('id');
@@ -34,6 +65,34 @@ window.addEventListener('DOMContentLoaded', () => {
         setTimeout(connectToSpeaker, 500);
     }
 });
+
+async function populateAyahOptions(surahNum) {
+    if (!surahNum || !elements.ayahFromSelect || !elements.ayahToSelect) {
+        if (elements.ayahFromSelect) elements.ayahFromSelect.innerHTML = '<option value="1">Ayah 1</option>';
+        if (elements.ayahToSelect) elements.ayahToSelect.innerHTML = '<option value="1">Ayah 1</option>';
+        return;
+    }
+
+    try {
+        const response = await fetch(`https://api.alquran.cloud/v1/surah/${surahNum}`);
+        const data = await response.json();
+        if (data.code === 200) {
+            const totalAyahs = data.data.numberOfAyahs;
+            let optionsHtml = '';
+            for (let i = 1; i <= totalAyahs; i++) {
+                optionsHtml += `<option value="${i}">Ayah ${i}</option>`;
+            }
+            elements.ayahFromSelect.innerHTML = optionsHtml;
+            elements.ayahToSelect.innerHTML = optionsHtml;
+            
+            // Set default values
+            elements.ayahFromSelect.value = "1";
+            elements.ayahToSelect.value = String(totalAyahs);
+        }
+    } catch (e) {
+        console.error("Failed to load ayahs on remote", e);
+    }
+}
 
 // Setup Listeners
 elements.connectBtn.addEventListener('click', connectToSpeaker);
@@ -54,6 +113,10 @@ function fetchSurahsList() {
         .catch(err => console.error("Failed to load surahs for remote dropdown", err));
 }
 
+let mqttClient = null;
+let pingInterval = null;
+let speakerId = '';
+
 function connectToSpeaker() {
     const rawId = elements.peerIdInput.value.trim();
     if (!rawId) {
@@ -61,50 +124,80 @@ function connectToSpeaker() {
         return;
     }
 
-    const speakerPeerId = 'athan-' + rawId;
+    speakerId = rawId;
+    console.log("Connecting to MQTT Broker (broker.emqx.io)...");
     updateStatus("Connecting...", "orange");
-    
-    // Generate a random ID for the remote controller itself
-    const controllerId = 'remote-' + Math.floor(Math.random() * 100000);
-    peer = new Peer(controllerId, { debug: 1 });
 
-    peer.on('open', () => {
-        conn = peer.connect(speakerPeerId);
+    if (mqttClient) {
+        try { mqttClient.end(); } catch(e){}
+    }
 
-        conn.on('open', () => {
-            updateStatus("Connected", "green");
-            showControlPanel(true);
-            setupRemoteControlActions();
-        });
-
-        conn.on('error', (err) => {
-            console.error("Data channel error:", err);
-            handleDisconnect("Connection Failed");
-        });
-
-        conn.on('close', () => {
-            handleDisconnect("Disconnected");
-        });
+    const clientId = 'remote_' + Math.floor(Math.random() * 100000);
+    mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+        clientId: clientId,
+        clean: true,
+        connectTimeout: 4000,
+        reconnectPeriod: 2000
     });
 
-    peer.on('error', (err) => {
-        console.error("Remote Peer error:", err);
+    mqttClient.on('connect', () => {
+        console.log("MQTT Connected! Subscribing to Speaker status...");
+        
+        // Subscribe to Speaker status topic
+        mqttClient.subscribe(`anisapp/athan/${speakerId}/status`);
+
+        // Start pinging the Speaker
+        if (pingInterval) clearInterval(pingInterval);
+        pingInterval = setInterval(() => {
+            if (mqttClient && mqttClient.connected) {
+                mqttClient.publish(`anisapp/athan/${speakerId}/ping`, JSON.stringify({ client: 'phone' }));
+            }
+        }, 2000);
+    });
+
+    mqttClient.on('message', (topic, message) => {
+        let payload;
+        try {
+            payload = JSON.parse(message.toString());
+        } catch (e) {
+            return;
+        }
+
+        if (topic.endsWith('/status')) {
+            if (payload.state === 'connected') {
+                updateStatus("Connected", "green");
+                showControlPanel(true);
+                setupRemoteControlActions();
+            } else {
+                updateStatus("Connecting to Speaker...", "orange");
+                showControlPanel(false);
+            }
+        }
+    });
+
+    mqttClient.on('error', (err) => {
+        console.error("MQTT Error:", err);
         handleDisconnect("Failed to connect");
+    });
+
+    mqttClient.on('close', () => {
+        console.log("MQTT Connection Closed");
+        handleDisconnect("Disconnected");
     });
 }
 
 function disconnectFromSpeaker() {
-    if (conn) {
-        conn.close();
-    }
     handleDisconnect("Disconnected");
 }
 
 function handleDisconnect(reason) {
-    conn = null;
-    if (peer) {
-        peer.destroy();
-        peer = null;
+    if (pingInterval) {
+        clearInterval(pingInterval);
+        pingInterval = null;
+    }
+    if (mqttClient) {
+        try { mqttClient.end(); } catch(e){}
+        mqttClient = null;
     }
     updateStatus(reason || "Disconnected", "red");
     showControlPanel(false);
@@ -133,8 +226,8 @@ function showControlPanel(show) {
 }
 
 function sendCommand(payload) {
-    if (conn && conn.open) {
-        conn.send(payload);
+    if (mqttClient && mqttClient.connected && speakerId) {
+        mqttClient.publish(`anisapp/athan/${speakerId}/command`, JSON.stringify(payload));
     } else {
         handleDisconnect("Connection Lost");
     }
@@ -149,7 +242,15 @@ function setupRemoteControlActions() {
     elements.quranPlay.onclick = () => {
         const surah = elements.surahSelect.value;
         if (surah) {
-            sendCommand({ action: 'play_quran', surah: parseInt(surah) });
+            sendCommand({
+                action: 'play_quran',
+                surah: parseInt(surah),
+                reciter: elements.reciterSelect.value,
+                fromAyah: elements.ayahFromSelect.value,
+                toAyah: elements.ayahToSelect.value,
+                ayahRepeat: elements.ayahRepeatSelect.value,
+                rangeRepeat: elements.rangeRepeatSelect.value
+            });
         } else {
             alert("Please select a Surah first.");
         }

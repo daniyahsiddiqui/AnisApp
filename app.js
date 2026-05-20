@@ -441,18 +441,66 @@ async function detectLocation() {
         return;
     }
     
+    // Attempt 1: ipapi.co
     try {
+        console.log("Trying geolocation via ipapi.co...");
         const response = await fetch('https://ipapi.co/json/');
-        const data = await response.json();
-        
-        if (data && data.latitude && data.longitude) {
-            config.lat = data.latitude;
-            config.lng = data.longitude;
-            config.locationName = `${data.city}, ${data.country_name}`;
+        if (response.ok) {
+            const data = await response.json();
+            if (data && data.latitude && data.longitude) {
+                config.lat = data.latitude;
+                config.lng = data.longitude;
+                config.locationName = `${data.city}, ${data.country_name}`;
+                UI.setText('.location-text', config.locationName);
+                console.log("Geolocation succeeded via ipapi.co:", config.locationName);
+                return;
+            }
         }
     } catch (error) {
-        console.error("Location detection failed", error);
+        console.warn("ipapi.co failed, trying fallback...", error);
     }
+    
+    // Attempt 2: ip-api.com
+    try {
+        console.log("Trying geolocation via ip-api.com...");
+        const response = await fetch('https://ip-api.com/json/');
+        if (response.ok) {
+            const data = await response.json();
+            if (data && data.lat && data.lon) {
+                config.lat = data.lat;
+                config.lng = data.lon;
+                config.locationName = `${data.city}, ${data.country}`;
+                UI.setText('.location-text', config.locationName);
+                console.log("Geolocation succeeded via ip-api.com:", config.locationName);
+                return;
+            }
+        }
+    } catch (error) {
+        console.warn("ip-api.com failed, trying fallback...", error);
+    }
+
+    // Attempt 3: ipinfo.io
+    try {
+        console.log("Trying geolocation via ipinfo.io...");
+        const response = await fetch('https://ipinfo.io/json');
+        if (response.ok) {
+            const data = await response.json();
+            if (data && data.loc) {
+                const parts = data.loc.split(',');
+                config.lat = parseFloat(parts[0]);
+                config.lng = parseFloat(parts[1]);
+                config.locationName = `${data.city}, ${data.country}`;
+                UI.setText('.location-text', config.locationName);
+                console.log("Geolocation succeeded via ipinfo.io:", config.locationName);
+                return;
+            }
+        }
+    } catch (error) {
+        console.warn("ipinfo.io failed.", error);
+    }
+
+    // Default fallback
+    console.warn("All geolocation APIs failed. Using default location.");
     UI.setText('.location-text', config.locationName);
 }
 
@@ -837,26 +885,30 @@ function stopQuran() {
     }
 }
 
-// --- PeerJS P2P Remote Control Logic (Speaker Side) ---
-let peer = null;
-let peerConnection = null;
+// --- MQTT Remote Control Logic (Speaker Side) ---
+let mqttClient = null;
+let lastPingTime = 0;
+let pingCheckInterval = null;
 
 function initPeerServer() {
-    if (peer) return; // Already initialized
+    if (mqttClient) return; // Already initialized
 
     // Generate a simple 5-digit number to make it easy to type on mobile
     const randCode = Math.floor(10000 + Math.random() * 90000);
-    const customId = 'athan-' + randCode;
+    const shortId = String(randCode);
     
     if (elements.remotePeerId) elements.remotePeerId.textContent = "Connecting...";
 
-    peer = new Peer(customId, {
-        debug: 1 // Print warnings and errors
+    console.log("Connecting to MQTT Broker (broker.emqx.io)...");
+    mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+        clientId: 'athan_speaker_' + shortId,
+        clean: true,
+        connectTimeout: 4000,
+        reconnectPeriod: 2000
     });
 
-    peer.on('open', (id) => {
-        console.log('Speaker Peer ID: ' + id);
-        const shortId = id.replace('athan-', '');
+    mqttClient.on('connect', () => {
+        console.log("MQTT Connected! Listening on ID: " + shortId);
         if (elements.remotePeerId) elements.remotePeerId.textContent = shortId;
         
         // Generate remote control link dynamically
@@ -867,40 +919,59 @@ function initPeerServer() {
         if (elements.remoteLink) {
             elements.remoteLink.href = remoteUrl;
         }
+
+        // Subscribe to commands and ping topics
+        mqttClient.subscribe(`anisapp/athan/${shortId}/command`);
+        mqttClient.subscribe(`anisapp/athan/${shortId}/ping`);
+
+        // Send waiting status
+        mqttClient.publish(`anisapp/athan/${shortId}/status`, JSON.stringify({ state: 'waiting' }), { retain: true });
+        updateRemoteStatus(false);
     });
 
-    peer.on('connection', (conn) => {
-        if (peerConnection) {
-            // Reject new connections if we already have one active remote
-            conn.close();
+    mqttClient.on('message', (topic, message) => {
+        let payload;
+        try {
+            payload = JSON.parse(message.toString());
+        } catch (e) {
+            console.error("Failed to parse MQTT message:", e);
             return;
         }
-        
-        peerConnection = conn;
-        updateRemoteStatus(true);
 
-        peerConnection.on('data', (data) => {
-            console.log('Received remote command:', data);
-            handleRemoteCommand(data);
-        });
-
-        peerConnection.on('close', () => {
-            peerConnection = null;
-            updateRemoteStatus(false);
-        });
-
-        peerConnection.on('error', (err) => {
-            console.error('Remote connection error:', err);
-            peerConnection = null;
-            updateRemoteStatus(false);
-        });
+        if (topic.endsWith('/ping')) {
+            if (Date.now() - lastPingTime > 4000) {
+                console.log("Remote phone connected via MQTT.");
+            }
+            lastPingTime = Date.now();
+            updateRemoteStatus(true);
+            mqttClient.publish(`anisapp/athan/${shortId}/status`, JSON.stringify({ state: 'connected' }));
+        } else if (topic.endsWith('/command')) {
+            console.log("Received remote command:", payload);
+            handleRemoteCommand(payload);
+        }
     });
 
-    peer.on('error', (err) => {
-        console.error('PeerJS Broker Error:', err);
+    mqttClient.on('error', (err) => {
+        console.error("MQTT Broker Error:", err);
         if (elements.remotePeerId) elements.remotePeerId.textContent = "Failed (Retry)";
-        peer = null; // Reset to allow retry
     });
+
+    mqttClient.on('close', () => {
+        console.log("MQTT Connection Closed");
+        updateRemoteStatus(false);
+    });
+
+    // Periodically check if we still receive pings from the phone
+    if (pingCheckInterval) clearInterval(pingCheckInterval);
+    pingCheckInterval = setInterval(() => {
+        if (Date.now() - lastPingTime > 6000) {
+            if (lastPingTime !== 0) {
+                console.log("Remote phone disconnected.");
+                lastPingTime = 0;
+            }
+            updateRemoteStatus(false);
+        }
+    }, 2000);
 }
 
 function updateRemoteStatus(connected) {
@@ -942,9 +1013,32 @@ function handleRemoteCommand(data) {
         case 'play_quran':
             if (data.surah) {
                 stopQuran();
+                
+                if (data.reciter) {
+                    config.quranReciter = data.reciter;
+                    localStorage.setItem('quranReciter', config.quranReciter);
+                    if (elements.quranReciterSelect) {
+                        elements.quranReciterSelect.value = data.reciter;
+                    }
+                }
+                
                 elements.quranSurahSelect.value = data.surah;
                 elements.quranStatus.textContent = "Loading remote surah...";
+                
                 loadSurahAudioData(data.surah).then(() => {
+                    if (data.fromAyah && elements.quranAyahFrom) {
+                        elements.quranAyahFrom.value = data.fromAyah;
+                    }
+                    if (data.toAyah && elements.quranAyahTo) {
+                        elements.quranAyahTo.value = data.toAyah;
+                    }
+                    if (data.ayahRepeat && elements.quranAyahRepeat) {
+                        elements.quranAyahRepeat.value = data.ayahRepeat;
+                    }
+                    if (data.rangeRepeat && elements.quranRangeRepeat) {
+                        elements.quranRangeRepeat.value = data.rangeRepeat;
+                    }
+                    
                     startOrResumeQuran();
                 }).catch(e => {
                     console.error("Failed to play remote Quran", e);
