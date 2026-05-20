@@ -2,7 +2,7 @@
 let config = {
     lat: 51.508515, 
     lng: -0.125487,
-    method: 2, 
+    method: parseInt(localStorage.getItem('athanMethod')) || 2, 
     locationName: "London, UK",
     theme: localStorage.getItem('theme') || 'joyful',
     athanReciter: localStorage.getItem('athanReciter') || 'al-afasy',
@@ -66,6 +66,7 @@ const elements = {
     
     manualLocationInput: document.getElementById('manual-location-input'),
     saveLocationBtn: document.getElementById('save-location-btn'),
+    athanMethodSelect: document.getElementById('athan-method-select'),
     
     hadithModal: document.getElementById('hadith-modal'),
     closeHadithBtn: document.getElementById('close-hadith-modal'),
@@ -79,6 +80,7 @@ async function init() {
     updateMuteUI();
     elements.athanSelect.value = config.athanReciter;
     elements.quranReciterSelect.value = config.quranReciter;
+    if (elements.athanMethodSelect) elements.athanMethodSelect.value = config.method;
     if (elements.manualLocationInput) elements.manualLocationInput.value = config.manualAddress;
     
     setupEventListeners();
@@ -125,6 +127,14 @@ function setupEventListeners() {
         config.athanReciter = e.target.value;
         localStorage.setItem('athanReciter', config.athanReciter);
     });
+
+    if (elements.athanMethodSelect) {
+        elements.athanMethodSelect.addEventListener('change', (e) => {
+            config.method = parseInt(e.target.value);
+            localStorage.setItem('athanMethod', config.method);
+            fetchPrayerTimes();
+        });
+    }
 
     // Test Athan Button Logic
     if (elements.testAthanBtn) {
