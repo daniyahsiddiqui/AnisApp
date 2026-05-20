@@ -4,7 +4,7 @@ let config = {
     lng: -0.125487,
     method: parseInt(localStorage.getItem('athanMethod')) || 2, 
     locationName: "London, UK",
-    theme: localStorage.getItem('theme') || 'joyful',
+    theme: localStorage.getItem('theme') || 'gold',
     athanReciter: localStorage.getItem('athanReciter') || 'al-afasy',
     quranReciter: localStorage.getItem('quranReciter') || 'ar.alafasy',
     isMuted: localStorage.getItem('isMuted') === 'true',
