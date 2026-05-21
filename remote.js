@@ -19,6 +19,7 @@ const elements = {
     quranPlay: document.getElementById('remote-quran-play'),
     quranStop: document.getElementById('remote-quran-stop'),
     takbeeratBtn: document.getElementById('remote-takbeerat-btn'),
+    takbeeratDurationSelect: document.getElementById('remote-takbeerat-duration'),
     methodSelect: document.getElementById('remote-method-select'),
     schoolSelect: document.getElementById('remote-school-select'),
     voiceBtns: document.querySelectorAll('.remote-voice-btn'),
@@ -172,6 +173,9 @@ function connectToSpeaker() {
                 showControlPanel(true);
                 setupRemoteControlActions();
                 updateSpeakerStatusUI(payload.speakerState, payload.detail);
+                if (payload.takbeeratDuration && elements.takbeeratDurationSelect) {
+                    elements.takbeeratDurationSelect.value = payload.takbeeratDuration;
+                }
             } else {
                 updateStatus("Connecting to Speaker...", "orange");
                 showControlPanel(false);
@@ -296,8 +300,15 @@ function setupRemoteControlActions() {
             if (currentSpeakerState === 'playing_athan' && currentSpeakerStateDetail === 'Playing Takbeerat...') {
                 sendCommand({ action: 'stop_takbeerat' });
             } else {
-                sendCommand({ action: 'play_takbeerat' });
+                const duration = elements.takbeeratDurationSelect ? elements.takbeeratDurationSelect.value : '5';
+                sendCommand({ action: 'play_takbeerat', duration: duration });
             }
+        };
+    }
+    
+    if (elements.takbeeratDurationSelect) {
+        elements.takbeeratDurationSelect.onchange = (e) => {
+            sendCommand({ action: 'change_takbeerat_duration', duration: e.target.value });
         };
     }
     

@@ -9,7 +9,8 @@ let config = {
     athanReciter: localStorage.getItem('athanReciter') || 'al-afasy',
     quranReciter: localStorage.getItem('quranReciter') || 'ar.alafasy',
     isMuted: localStorage.getItem('isMuted') === 'true',
-    manualAddress: localStorage.getItem('manualAddress') || ''
+    manualAddress: localStorage.getItem('manualAddress') || '',
+    takbeeratDuration: localStorage.getItem('takbeeratDuration') || '5'
 };
 
 // State
@@ -94,6 +95,9 @@ async function init() {
     if (elements.athanSchoolSelect) elements.athanSchoolSelect.value = config.school;
     if (elements.manualLocationInput) elements.manualLocationInput.value = config.manualAddress;
     
+    const takbeeratDurationSelect = document.getElementById('takbeerat-duration-select');
+    if (takbeeratDurationSelect) takbeeratDurationSelect.value = config.takbeeratDuration;
+    
     setupEventListeners();
     setupVoiceRecognition();
     
@@ -134,17 +138,21 @@ function setupEventListeners() {
     // Takbeerat Logic
     const handleTakbeeratClick = () => {
         if (currentAthanAudioType === 'takbeerat') {
-            elements.audio.pause();
-            elements.audio.currentTime = 0;
-            currentAthanAudioType = 'none';
-            if (elements.testAthanBtn) elements.testAthanBtn.innerHTML = '🔊 Test';
-            publishSpeakerStatus('idle', 'Speaker is Idle');
+            stopTakbeerat();
         } else {
             playTakbeerat();
         }
     };
     UI.on('#takbeerat-btn', 'click', handleTakbeeratClick);
     UI.on('#joyful-takbeerat-btn', 'click', handleTakbeeratClick);
+
+    const takbeeratDurationSelect = document.getElementById('takbeerat-duration-select');
+    if (takbeeratDurationSelect) {
+        takbeeratDurationSelect.addEventListener('change', (e) => {
+            config.takbeeratDuration = e.target.value;
+            localStorage.setItem('takbeeratDuration', config.takbeeratDuration);
+        });
+    }
 
     // Hadith Logic
     UI.on('.open-hadith-btn', 'click', () => {
@@ -213,10 +221,13 @@ function setupEventListeners() {
                 } catch (e) {
                     console.error("Dua play blocked by browser", e);
                 }
+            } else if (currentAthanAudioType === 'takbeerat') {
+                stopTakbeerat();
             } else {
                 currentAthanAudioType = 'none';
                 elements.testAthanBtn.innerHTML = '🔊 Test';
                 publishSpeakerStatus('idle', 'Speaker is Idle');
+                updateTakbeeratButtonUI();
             }
         });
     }
@@ -501,13 +512,66 @@ async function fetchDailyHadith() {
 }
 
 // --- Takbeerat Logic ---
+let takbeeratTimeout = null;
+
+function updateTakbeeratButtonUI() {
+    const isPlaying = (currentAthanAudioType === 'takbeerat');
+    const btn = document.getElementById('takbeerat-btn');
+    const joyfulBtn = document.getElementById('joyful-takbeerat-btn');
+    
+    if (btn) {
+        if (isPlaying) {
+            btn.innerHTML = '⏹ Stop Takbeerat';
+            btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+        } else {
+            btn.innerHTML = '🕋 Play Takbeerat';
+            btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        }
+    }
+    if (joyfulBtn) {
+        if (isPlaying) {
+            joyfulBtn.innerHTML = '⏹ Stop Takbeerat';
+            joyfulBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+        } else {
+            joyfulBtn.innerHTML = '🕋 Play Takbeerat';
+            joyfulBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        }
+    }
+}
+
 function playTakbeerat() {
     stopQuran();
+    
+    // Stop any active athan/dua
     elements.audio.pause();
     elements.audio.currentTime = 0;
+    if (takbeeratTimeout) {
+        clearTimeout(takbeeratTimeout);
+        takbeeratTimeout = null;
+    }
     
-    elements.audio.src = 'https://archive.org/download/HajjTakbir/Hajj%20Takbir.mp3';
+    elements.audio.src = 'https://archive.org/download/EidTakbirBySheikhAliMullah/EidTakbirBySheikhAliMullah.mp3';
     currentAthanAudioType = 'takbeerat';
+    
+    // Set loop based on duration
+    const duration = config.takbeeratDuration;
+    if (duration === 'once') {
+        elements.audio.loop = false;
+    } else {
+        elements.audio.loop = true;
+    }
+    
+    // Set timer if timed duration (1, 3, 5 min)
+    if (duration !== 'once' && duration !== 'continuous') {
+        const minutes = parseInt(duration) || 5;
+        console.log(`Takbeerat will stop automatically in ${minutes} minutes.`);
+        takbeeratTimeout = setTimeout(() => {
+            console.log(`Takbeerat auto-stopped after ${minutes} minutes.`);
+            stopTakbeerat();
+        }, minutes * 60 * 1000);
+    }
+    
+    updateTakbeeratButtonUI();
     
     if (elements.testAthanBtn) elements.testAthanBtn.innerHTML = '⏹ Stop';
     
@@ -527,7 +591,34 @@ function playTakbeerat() {
     }
 }
 
+function stopTakbeerat() {
+    if (currentAthanAudioType === 'takbeerat') {
+        elements.audio.pause();
+        elements.audio.currentTime = 0;
+        elements.audio.loop = false;
+        currentAthanAudioType = 'none';
+        if (takbeeratTimeout) {
+            clearTimeout(takbeeratTimeout);
+            takbeeratTimeout = null;
+        }
+        updateTakbeeratButtonUI();
+        if (elements.testAthanBtn) elements.testAthanBtn.innerHTML = '🔊 Test';
+        publishSpeakerStatus('idle', 'Speaker is Idle');
+    }
+}
+
 function checkAndToggleTakbeeratButton() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const forceShow = urlParams.has('testTakbeerat') || urlParams.get('test') === 'takbeerat';
+    
+    if (forceShow) {
+        const btn = document.getElementById('takbeerat-btn');
+        const joyfulBtn = document.getElementById('joyful-takbeerat-btn');
+        if (btn) btn.style.display = 'inline-flex';
+        if (joyfulBtn) joyfulBtn.style.display = 'inline-flex';
+        return;
+    }
+
     if (!hijriDateInfo) return;
     
     const day = parseInt(hijriDateInfo.day);
@@ -913,6 +1004,18 @@ function buildAudioQueue() {
 function startOrResumeQuran() {
     if (!elements.quranSurahSelect.value) return;
 
+    if (currentAthanAudioType === 'takbeerat') {
+        stopTakbeerat();
+    }
+    // Also stop regular Athan if playing
+    if (currentAthanAudioType === 'athan' || currentAthanAudioType === 'dua') {
+        elements.audio.pause();
+        elements.audio.currentTime = 0;
+        currentAthanAudioType = 'none';
+        if (elements.testAthanBtn) elements.testAthanBtn.innerHTML = '🔊 Test';
+        updateTakbeeratButtonUI();
+    }
+
     if (audioQueue.length === 0 || currentQueueIndex === 0) {
         audioQueue = buildAudioQueue();
         currentQueueIndex = 0;
@@ -1044,7 +1147,8 @@ function publishSpeakerStatus(speakerState, detail) {
         mqttClient.publish(`anisapp/athan/${currentShortId}/status`, JSON.stringify({
             state: 'connected',
             speakerState: currentSpeakerState,
-            detail: currentSpeakerStateDetail
+            detail: currentSpeakerStateDetail,
+            takbeeratDuration: config.takbeeratDuration
         }));
     }
 }
@@ -1216,16 +1320,25 @@ function handleRemoteCommand(data) {
             break;
 
         case 'play_takbeerat':
+            if (data.duration) {
+                config.takbeeratDuration = data.duration;
+                localStorage.setItem('takbeeratDuration', config.takbeeratDuration);
+                const select = document.getElementById('takbeerat-duration-select');
+                if (select) select.value = data.duration;
+            }
             playTakbeerat();
             break;
 
         case 'stop_takbeerat':
-            if (currentAthanAudioType === 'takbeerat') {
-                elements.audio.pause();
-                elements.audio.currentTime = 0;
-                currentAthanAudioType = 'none';
-                if (elements.testAthanBtn) elements.testAthanBtn.innerHTML = '🔊 Test';
-                publishSpeakerStatus('idle', 'Speaker is Idle');
+            stopTakbeerat();
+            break;
+
+        case 'change_takbeerat_duration':
+            if (data.duration) {
+                config.takbeeratDuration = data.duration;
+                localStorage.setItem('takbeeratDuration', config.takbeeratDuration);
+                const select = document.getElementById('takbeerat-duration-select');
+                if (select) select.value = data.duration;
             }
             break;
             
