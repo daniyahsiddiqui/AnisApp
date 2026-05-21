@@ -22,8 +22,9 @@ let currentSurahData = null;
 let isQuranPlaying = false;
 let audioQueue = [];
 let currentQueueIndex = 0;
-let currentAthanAudioType = 'none'; // 'athan', 'dua', or 'none'
+let currentAthanAudioType = 'none'; // 'none', 'athan', 'dua', or 'takbeerat'
 let wakeLock = null;
+let hijriDateInfo = null;
 
 // Voice State
 let recognition = null;
@@ -129,6 +130,21 @@ function setupEventListeners() {
     UI.on('#close-remote', 'click', () => {
         if (elements.remoteModal) elements.remoteModal.classList.remove('open');
     });
+
+    // Takbeerat Logic
+    const handleTakbeeratClick = () => {
+        if (currentAthanAudioType === 'takbeerat') {
+            elements.audio.pause();
+            elements.audio.currentTime = 0;
+            currentAthanAudioType = 'none';
+            if (elements.testAthanBtn) elements.testAthanBtn.innerHTML = '🔊 Test';
+            publishSpeakerStatus('idle', 'Speaker is Idle');
+        } else {
+            playTakbeerat();
+        }
+    };
+    UI.on('#takbeerat-btn', 'click', handleTakbeeratClick);
+    UI.on('#joyful-takbeerat-btn', 'click', handleTakbeeratClick);
 
     // Hadith Logic
     UI.on('.open-hadith-btn', 'click', () => {
@@ -484,6 +500,53 @@ async function fetchDailyHadith() {
     }
 }
 
+// --- Takbeerat Logic ---
+function playTakbeerat() {
+    stopQuran();
+    elements.audio.pause();
+    elements.audio.currentTime = 0;
+    
+    elements.audio.src = 'https://archive.org/download/HajjTakbir/Hajj%20Takbir.mp3';
+    currentAthanAudioType = 'takbeerat';
+    
+    if (elements.testAthanBtn) elements.testAthanBtn.innerHTML = '⏹ Stop';
+    
+    publishSpeakerStatus('playing_athan', 'Playing Takbeerat...');
+    
+    try {
+        const playPromise = elements.audio.play();
+        if (playPromise !== undefined && typeof playPromise.catch === 'function') {
+            playPromise.catch(e => {
+                console.error("Takbeerat play blocked", e);
+                publishSpeakerStatus('error', 'Autoplay blocked. Tap screen.');
+            });
+        }
+    } catch (e) {
+        console.error("Takbeerat play blocked", e);
+        publishSpeakerStatus('error', 'Autoplay blocked. Tap screen.');
+    }
+}
+
+function checkAndToggleTakbeeratButton() {
+    if (!hijriDateInfo) return;
+    
+    const day = parseInt(hijriDateInfo.day);
+    const month = parseInt(hijriDateInfo.month.number);
+    
+    // 1st to 13th days of Dhul Hijjah (month 12)
+    // 1st day of Shawwal (month 10)
+    const isDhulHijjahTakbeer = (month === 12 && day >= 1 && day <= 13);
+    const isEidFitrTakbeer = (month === 10 && day === 1);
+    
+    const showTakbeer = isDhulHijjahTakbeer || isEidFitrTakbeer;
+    
+    const btn = document.getElementById('takbeerat-btn');
+    const joyfulBtn = document.getElementById('joyful-takbeerat-btn');
+    
+    if (btn) btn.style.display = showTakbeer ? 'inline-flex' : 'none';
+    if (joyfulBtn) joyfulBtn.style.display = showTakbeer ? 'inline-flex' : 'none';
+}
+
 async function detectLocation() {
     if (config.manualAddress) {
         UI.setText('.location-text', config.manualAddress);
@@ -585,10 +648,12 @@ async function fetchPrayerTimes() {
         
         if (data.code === 200) {
             prayerTimes = data.data.timings;
+            hijriDateInfo = data.data.date.hijri;
             UI.setText('.gregorian-date', data.data.date.readable);
             UI.setText('.hijri-date', `${data.data.date.hijri.day} ${data.data.date.hijri.month.en} ${data.data.date.hijri.year}`);
             updatePrayerTimesUI();
             calculateNextPrayer();
+            checkAndToggleTakbeeratButton();
         }
     } catch (error) {
         console.error("Failed to fetch prayer times", error);
@@ -1148,6 +1213,20 @@ function handleRemoteCommand(data) {
             
         case 'stop_quran':
             stopQuran();
+            break;
+
+        case 'play_takbeerat':
+            playTakbeerat();
+            break;
+
+        case 'stop_takbeerat':
+            if (currentAthanAudioType === 'takbeerat') {
+                elements.audio.pause();
+                elements.audio.currentTime = 0;
+                currentAthanAudioType = 'none';
+                if (elements.testAthanBtn) elements.testAthanBtn.innerHTML = '🔊 Test';
+                publishSpeakerStatus('idle', 'Speaker is Idle');
+            }
             break;
             
         case 'change_theme':

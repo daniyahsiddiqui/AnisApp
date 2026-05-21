@@ -1,6 +1,8 @@
 // PeerJS P2P Remote Control Logic (Controller Side)
 let peer = null;
 let conn = null;
+let currentSpeakerState = 'idle';
+let currentSpeakerStateDetail = 'Speaker is Idle';
 
 const elements = {
     setupScreen: document.getElementById('setup-screen'),
@@ -16,6 +18,7 @@ const elements = {
     surahSelect: document.getElementById('remote-surah-select'),
     quranPlay: document.getElementById('remote-quran-play'),
     quranStop: document.getElementById('remote-quran-stop'),
+    takbeeratBtn: document.getElementById('remote-takbeerat-btn'),
     methodSelect: document.getElementById('remote-method-select'),
     schoolSelect: document.getElementById('remote-school-select'),
     voiceBtns: document.querySelectorAll('.remote-voice-btn'),
@@ -206,6 +209,9 @@ function handleDisconnect(reason) {
 }
 
 function updateSpeakerStatusUI(speakerState, detail) {
+    currentSpeakerState = speakerState || 'idle';
+    currentSpeakerStateDetail = detail || 'Speaker is Idle';
+
     const dot = document.getElementById('speaker-status-dot');
     const text = document.getElementById('speaker-status-text');
     if (!dot || !text) return;
@@ -217,7 +223,18 @@ function updateSpeakerStatusUI(speakerState, detail) {
         dot.classList.add(speakerState);
     }
     
-    text.textContent = detail || 'Speaker is Idle';
+    text.textContent = currentSpeakerStateDetail;
+
+    // Toggle Remote Takbeerat button label depending on state
+    if (elements.takbeeratBtn) {
+        if (currentSpeakerState === 'playing_athan' && currentSpeakerStateDetail === 'Playing Takbeerat...') {
+            elements.takbeeratBtn.innerHTML = '⏹ Stop Takbeerat';
+            elements.takbeeratBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+        } else {
+            elements.takbeeratBtn.innerHTML = '🕋 Play Takbeerat';
+            elements.takbeeratBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        }
+    }
 }
 
 function updateStatus(text, colorClass) {
@@ -273,6 +290,16 @@ function setupRemoteControlActions() {
         }
     };
     elements.quranStop.onclick = () => sendCommand({ action: 'stop_quran' });
+    
+    if (elements.takbeeratBtn) {
+        elements.takbeeratBtn.onclick = () => {
+            if (currentSpeakerState === 'playing_athan' && currentSpeakerStateDetail === 'Playing Takbeerat...') {
+                sendCommand({ action: 'stop_takbeerat' });
+            } else {
+                sendCommand({ action: 'play_takbeerat' });
+            }
+        };
+    }
     
     // Settings dropdowns
     elements.methodSelect.onchange = (e) => sendCommand({ action: 'change_method', method: e.target.value });

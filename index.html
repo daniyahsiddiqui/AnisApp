@@ -51,10 +51,11 @@
                 <p>Next Prayer: <span class="next-prayer-name">--</span></p>
                 <h2 class="countdown-timer">--:--:--</h2>
             </div>
-            <div class="action-buttons" style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <div class="action-buttons" style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
                 <button class="primary-btn open-quran-btn" style="margin-top: 0;">📖 Play Quran</button>
                 <button class="primary-btn open-hadith-btn" style="margin-top: 0; background: var(--card-bg); color: var(--text-primary); border: 1px solid var(--text-secondary);">📜 Daily Hadith</button>
-                <button class="icon-btn voice-cmd-btn" title="Voice Commands" style="font-size: 2rem; background: var(--card-bg); border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">🎙️</button>
+                <button id="takbeerat-btn" class="primary-btn" style="margin-top: 0; background: linear-gradient(135deg, #10b981, #059669); color: white; display: none; align-items: center; justify-content: center; gap: 8px;">🕋 Play Takbeerat</button>
+                <button class="icon-btn voice-cmd-btn" title="Voice Commands" style="font-size: 2rem; background: var(--card-bg); border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); margin-top: 0;">🎙️</button>
             </div>
             <div class="voice-status" style="margin-top: 0.5rem; color: var(--accent-color); font-size: 0.9rem; min-height: 1.2em;"></div>
         </main>
@@ -178,6 +179,7 @@
                 <div class="joy-actions">
                     <button class="joy-btn joy-btn-primary open-quran-btn">📖 Play Quran</button>
                     <button class="joy-btn joy-btn-secondary open-hadith-btn">📜 Daily Hadith</button>
+                    <button id="joyful-takbeerat-btn" class="joy-btn" style="background: linear-gradient(135deg, #10b981, #059669); color: white; display: none;">🕋 Play Takbeerat</button>
                     <button class="joy-btn joy-btn-secondary voice-cmd-btn" style="max-width: 50px;">🎙️</button>
                 </div>
                 <div class="voice-status" style="margin-top: 0.2rem; color: var(--joy-pink); font-size: 0.8rem; min-height: 1.2em;"></div>
