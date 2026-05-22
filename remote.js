@@ -30,7 +30,17 @@ const elements = {
     ayahFromSelect: document.getElementById('remote-ayah-from'),
     ayahToSelect: document.getElementById('remote-ayah-to'),
     ayahRepeatSelect: document.getElementById('remote-ayah-repeat'),
-    rangeRepeatSelect: document.getElementById('remote-range-repeat')
+    rangeRepeatSelect: document.getElementById('remote-range-repeat'),
+    
+    // Azkar Elements
+    remoteMorningAzkarBtn: document.getElementById('remote-morning-azkar-btn'),
+    remoteEveningAzkarBtn: document.getElementById('remote-evening-azkar-btn'),
+    autoMorningAzkarCheckbox: document.getElementById('remote-auto-morning-azkar'),
+    morningAzkarTimeInput: document.getElementById('remote-morning-azkar-time'),
+    autoEveningAzkarCheckbox: document.getElementById('remote-auto-evening-azkar'),
+    eveningAzkarModeAsrRadio: document.getElementById('remote-evening-azkar-mode-asr'),
+    eveningAzkarModeCustomRadio: document.getElementById('remote-evening-azkar-mode-custom'),
+    eveningAzkarTimeInput: document.getElementById('remote-evening-azkar-time')
 };
 
 // Auto-fill and connect if ID is provided in query string
@@ -176,6 +186,29 @@ function connectToSpeaker() {
                 if (payload.takbeeratDuration && elements.takbeeratDurationSelect) {
                     elements.takbeeratDurationSelect.value = payload.takbeeratDuration;
                 }
+                
+                // Sync Azkar configuration values
+                if (payload.autoMorningAzkar !== undefined && elements.autoMorningAzkarCheckbox) {
+                    elements.autoMorningAzkarCheckbox.checked = payload.autoMorningAzkar === true || payload.autoMorningAzkar === 'true';
+                }
+                if (payload.morningAzkarTime && elements.morningAzkarTimeInput) {
+                    elements.morningAzkarTimeInput.value = payload.morningAzkarTime;
+                }
+                if (payload.autoEveningAzkar !== undefined && elements.autoEveningAzkarCheckbox) {
+                    elements.autoEveningAzkarCheckbox.checked = payload.autoEveningAzkar === true || payload.autoEveningAzkar === 'true';
+                }
+                if (payload.eveningAzkarMode) {
+                    if (payload.eveningAzkarMode === 'asr_offset') {
+                        if (elements.eveningAzkarModeAsrRadio) elements.eveningAzkarModeAsrRadio.checked = true;
+                        if (elements.eveningAzkarTimeInput) elements.eveningAzkarTimeInput.disabled = true;
+                    } else {
+                        if (elements.eveningAzkarModeCustomRadio) elements.eveningAzkarModeCustomRadio.checked = true;
+                        if (elements.eveningAzkarTimeInput) elements.eveningAzkarTimeInput.disabled = false;
+                    }
+                }
+                if (payload.eveningAzkarTime && elements.eveningAzkarTimeInput) {
+                    elements.eveningAzkarTimeInput.value = payload.eveningAzkarTime;
+                }
             } else {
                 updateStatus("Connecting to Speaker...", "orange");
                 showControlPanel(false);
@@ -237,6 +270,28 @@ function updateSpeakerStatusUI(speakerState, detail) {
         } else {
             elements.takbeeratBtn.innerHTML = '🕋 Play Takbeerat';
             elements.takbeeratBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        }
+    }
+
+    // Toggle Remote Morning Azkar button label depending on state
+    if (elements.remoteMorningAzkarBtn) {
+        if (currentSpeakerState === 'playing_athan' && currentSpeakerStateDetail === 'Playing Morning Azkar...') {
+            elements.remoteMorningAzkarBtn.innerHTML = '⏹ Stop Azkar';
+            elements.remoteMorningAzkarBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+        } else {
+            elements.remoteMorningAzkarBtn.innerHTML = '☀️ Morning Azkar';
+            elements.remoteMorningAzkarBtn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+        }
+    }
+
+    // Toggle Remote Evening Azkar button label depending on state
+    if (elements.remoteEveningAzkarBtn) {
+        if (currentSpeakerState === 'playing_athan' && currentSpeakerStateDetail === 'Playing Evening Azkar...') {
+            elements.remoteEveningAzkarBtn.innerHTML = '⏹ Stop Azkar';
+            elements.remoteEveningAzkarBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+        } else {
+            elements.remoteEveningAzkarBtn.innerHTML = '🌙 Evening Azkar';
+            elements.remoteEveningAzkarBtn.style.background = 'linear-gradient(135deg, #6366f1, #4f46e5)';
         }
     }
 }
@@ -312,6 +367,75 @@ function setupRemoteControlActions() {
         };
     }
     
+    // Azkar buttons
+    if (elements.remoteMorningAzkarBtn) {
+        elements.remoteMorningAzkarBtn.onclick = () => {
+            if (currentSpeakerState === 'playing_athan' && currentSpeakerStateDetail === 'Playing Morning Azkar...') {
+                sendCommand({ action: 'stop_azkar' });
+            } else {
+                sendCommand({ action: 'play_azkar', type: 'morning' });
+            }
+        };
+    }
+    
+    if (elements.remoteEveningAzkarBtn) {
+        elements.remoteEveningAzkarBtn.onclick = () => {
+            if (currentSpeakerState === 'playing_athan' && currentSpeakerStateDetail === 'Playing Evening Azkar...') {
+                sendCommand({ action: 'stop_azkar' });
+            } else {
+                sendCommand({ action: 'play_azkar', type: 'evening' });
+            }
+        };
+    }
+
+    // Azkar settings sending changes
+    const gatherAndSendAzkarSettings = () => {
+        const autoMorning = elements.autoMorningAzkarCheckbox ? elements.autoMorningAzkarCheckbox.checked : false;
+        const morningTime = elements.morningAzkarTimeInput ? elements.morningAzkarTimeInput.value : '07:00';
+        const autoEvening = elements.autoEveningAzkarCheckbox ? elements.autoEveningAzkarCheckbox.checked : false;
+        
+        let mode = 'asr_offset';
+        if (elements.eveningAzkarModeCustomRadio && elements.eveningAzkarModeCustomRadio.checked) {
+            mode = 'custom';
+        }
+        
+        const eveningTime = elements.eveningAzkarTimeInput ? elements.eveningAzkarTimeInput.value : '18:00';
+
+        sendCommand({
+            action: 'change_azkar_settings',
+            autoMorningAzkar: autoMorning,
+            morningAzkarTime: morningTime,
+            autoEveningAzkar: autoEvening,
+            eveningAzkarMode: mode,
+            eveningAzkarTime: eveningTime
+        });
+    };
+
+    if (elements.autoMorningAzkarCheckbox) {
+        elements.autoMorningAzkarCheckbox.onchange = gatherAndSendAzkarSettings;
+    }
+    if (elements.morningAzkarTimeInput) {
+        elements.morningAzkarTimeInput.onchange = gatherAndSendAzkarSettings;
+    }
+    if (elements.autoEveningAzkarCheckbox) {
+        elements.autoEveningAzkarCheckbox.onchange = gatherAndSendAzkarSettings;
+    }
+    if (elements.eveningAzkarModeAsrRadio) {
+        elements.eveningAzkarModeAsrRadio.onchange = () => {
+            if (elements.eveningAzkarTimeInput) elements.eveningAzkarTimeInput.disabled = true;
+            gatherAndSendAzkarSettings();
+        };
+    }
+    if (elements.eveningAzkarModeCustomRadio) {
+        elements.eveningAzkarModeCustomRadio.onchange = () => {
+            if (elements.eveningAzkarTimeInput) elements.eveningAzkarTimeInput.disabled = false;
+            gatherAndSendAzkarSettings();
+        };
+    }
+    if (elements.eveningAzkarTimeInput) {
+        elements.eveningAzkarTimeInput.onchange = gatherAndSendAzkarSettings;
+    }
+
     // Settings dropdowns
     elements.methodSelect.onchange = (e) => sendCommand({ action: 'change_method', method: e.target.value });
     elements.schoolSelect.onchange = (e) => sendCommand({ action: 'change_school', school: e.target.value });

@@ -396,6 +396,36 @@
                     </div>
                 </div>
 
+                <!-- Azkar Auto-Play Settings -->
+                <div class="control-section">
+                    <div class="section-title">Azkar Auto-Play Settings</div>
+                    
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <label for="remote-auto-morning-azkar" style="font-weight: 500;">Auto-Play Morning Azkar</label>
+                        <input type="checkbox" id="remote-auto-morning-azkar" style="width: 20px; height: 20px;">
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 16px; padding-left: 10px;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Play Time:</span>
+                        <input type="time" id="remote-morning-azkar-time" style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-primary);">
+                    </div>
+
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                        <label for="remote-auto-evening-azkar" style="font-weight: 500;">Auto-Play Evening Azkar</label>
+                        <input type="checkbox" id="remote-auto-evening-azkar" style="width: 20px; height: 20px;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; padding-left: 10px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="radio" id="remote-evening-azkar-mode-asr" name="remote-evening-azkar-mode" value="asr_offset" checked style="width:16px; height:16px;">
+                            <label for="remote-evening-azkar-mode-asr" style="font-size: 0.9rem;">1 hour after Asr</label>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="radio" id="remote-evening-azkar-mode-custom" name="remote-evening-azkar-mode" value="custom" style="width:16px; height:16px;">
+                            <label for="remote-evening-azkar-mode-custom" style="font-size: 0.9rem; margin-right: 8px;">Custom Time:</label>
+                            <input type="time" id="remote-evening-azkar-time" style="flex: 1; max-width: 120px; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-primary);">
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Themes & Actions -->
                 <div class="control-section">
                     <div class="section-title">Theme / Layout</div>
@@ -484,6 +514,10 @@
                     <div class="grid-2" style="margin-bottom: 10px;">
                         <button id="remote-quran-play" class="btn btn-primary">▶️ Play Quran</button>
                         <button id="remote-quran-stop" class="btn btn-secondary">⏹️ Stop</button>
+                    </div>
+                    <div class="grid-2" style="margin-bottom: 10px;">
+                        <button id="remote-morning-azkar-btn" class="btn" style="background: linear-gradient(135deg, #f59e0b, #d97706); border: none; color: white; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px;">☀️ Morning Azkar</button>
+                        <button id="remote-evening-azkar-btn" class="btn" style="background: linear-gradient(135deg, #6366f1, #4f46e5); border: none; color: white; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px;">🌙 Evening Azkar</button>
                     </div>
                     <div style="margin-bottom: 10px;">
                         <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Takbeerat Duration</label>

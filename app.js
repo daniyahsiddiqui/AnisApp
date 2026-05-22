@@ -10,7 +10,12 @@ let config = {
     quranReciter: localStorage.getItem('quranReciter') || 'ar.alafasy',
     isMuted: localStorage.getItem('isMuted') === 'true',
     manualAddress: localStorage.getItem('manualAddress') || '',
-    takbeeratDuration: localStorage.getItem('takbeeratDuration') || '5'
+    takbeeratDuration: localStorage.getItem('takbeeratDuration') || '5',
+    autoMorningAzkar: localStorage.getItem('autoMorningAzkar') === 'true',
+    morningAzkarTime: localStorage.getItem('morningAzkarTime') || '07:00',
+    autoEveningAzkar: localStorage.getItem('autoEveningAzkar') === 'true',
+    eveningAzkarMode: localStorage.getItem('eveningAzkarMode') || 'asr_offset',
+    eveningAzkarTime: localStorage.getItem('eveningAzkarTime') || '18:00'
 };
 
 // State
@@ -97,6 +102,26 @@ async function init() {
     
     const takbeeratDurationSelect = document.getElementById('takbeerat-duration-select');
     if (takbeeratDurationSelect) takbeeratDurationSelect.value = config.takbeeratDuration;
+
+    // Initialize Azkar Auto-Play UI elements
+    const autoMorningAzkarCheckbox = document.getElementById('auto-morning-azkar');
+    const morningAzkarTimeInput = document.getElementById('morning-azkar-time');
+    const autoEveningAzkarCheckbox = document.getElementById('auto-evening-azkar');
+    const eveningAzkarModeAsrRadio = document.getElementById('evening-azkar-mode-asr');
+    const eveningAzkarModeCustomRadio = document.getElementById('evening-azkar-mode-custom');
+    const eveningAzkarTimeInput = document.getElementById('evening-azkar-time');
+
+    if (autoMorningAzkarCheckbox) autoMorningAzkarCheckbox.checked = config.autoMorningAzkar;
+    if (morningAzkarTimeInput) morningAzkarTimeInput.value = config.morningAzkarTime;
+    if (autoEveningAzkarCheckbox) autoEveningAzkarCheckbox.checked = config.autoEveningAzkar;
+    if (config.eveningAzkarMode === 'asr_offset') {
+        if (eveningAzkarModeAsrRadio) eveningAzkarModeAsrRadio.checked = true;
+        if (eveningAzkarTimeInput) eveningAzkarTimeInput.disabled = true;
+    } else {
+        if (eveningAzkarModeCustomRadio) eveningAzkarModeCustomRadio.checked = true;
+        if (eveningAzkarTimeInput) eveningAzkarTimeInput.disabled = false;
+    }
+    if (eveningAzkarTimeInput) eveningAzkarTimeInput.value = config.eveningAzkarTime;
     
     setupEventListeners();
     setupVoiceRecognition();
@@ -134,6 +159,77 @@ function setupEventListeners() {
     UI.on('#close-remote', 'click', () => {
         if (elements.remoteModal) elements.remoteModal.classList.remove('open');
     });
+
+    // Azkar Play/Stop Click Listeners
+    const handleMorningAzkarClick = () => {
+        if (currentAthanAudioType === 'morning_azkar') {
+            stopAzkar();
+        } else {
+            playAzkar('morning');
+        }
+    };
+    UI.on('#morning-azkar-btn', 'click', handleMorningAzkarClick);
+    UI.on('#joyful-morning-azkar-btn', 'click', handleMorningAzkarClick);
+
+    const handleEveningAzkarClick = () => {
+        if (currentAthanAudioType === 'evening_azkar') {
+            stopAzkar();
+        } else {
+            playAzkar('evening');
+        }
+    };
+    UI.on('#evening-azkar-btn', 'click', handleEveningAzkarClick);
+    UI.on('#joyful-evening-azkar-btn', 'click', handleEveningAzkarClick);
+
+    // Azkar Setting change listeners
+    const autoMorningAzkarCheckbox = document.getElementById('auto-morning-azkar');
+    if (autoMorningAzkarCheckbox) {
+        autoMorningAzkarCheckbox.addEventListener('change', (e) => {
+            config.autoMorningAzkar = e.target.checked;
+            localStorage.setItem('autoMorningAzkar', config.autoMorningAzkar);
+        });
+    }
+
+    const morningAzkarTimeInput = document.getElementById('morning-azkar-time');
+    if (morningAzkarTimeInput) {
+        morningAzkarTimeInput.addEventListener('change', (e) => {
+            config.morningAzkarTime = e.target.value;
+            localStorage.setItem('morningAzkarTime', config.morningAzkarTime);
+        });
+    }
+
+    const autoEveningAzkarCheckbox = document.getElementById('auto-evening-azkar');
+    if (autoEveningAzkarCheckbox) {
+        autoEveningAzkarCheckbox.addEventListener('change', (e) => {
+            config.autoEveningAzkar = e.target.checked;
+            localStorage.setItem('autoEveningAzkar', config.autoEveningAzkar);
+        });
+    }
+
+    const eveningAzkarModeAsrRadio = document.getElementById('evening-azkar-mode-asr');
+    const eveningAzkarModeCustomRadio = document.getElementById('evening-azkar-mode-custom');
+    const eveningAzkarTimeInput = document.getElementById('evening-azkar-time');
+
+    if (eveningAzkarModeAsrRadio && eveningAzkarModeCustomRadio && eveningAzkarTimeInput) {
+        eveningAzkarModeAsrRadio.addEventListener('change', () => {
+            if (eveningAzkarModeAsrRadio.checked) {
+                config.eveningAzkarMode = 'asr_offset';
+                localStorage.setItem('eveningAzkarMode', config.eveningAzkarMode);
+                eveningAzkarTimeInput.disabled = true;
+            }
+        });
+        eveningAzkarModeCustomRadio.addEventListener('change', () => {
+            if (eveningAzkarModeCustomRadio.checked) {
+                config.eveningAzkarMode = 'custom';
+                localStorage.setItem('eveningAzkarMode', config.eveningAzkarMode);
+                eveningAzkarTimeInput.disabled = false;
+            }
+        });
+        eveningAzkarTimeInput.addEventListener('change', (e) => {
+            config.eveningAzkarTime = e.target.value;
+            localStorage.setItem('eveningAzkarTime', config.eveningAzkarTime);
+        });
+    }
 
     // Takbeerat Logic
     const handleTakbeeratClick = () => {
@@ -223,11 +319,14 @@ function setupEventListeners() {
                 }
             } else if (currentAthanAudioType === 'takbeerat') {
                 stopTakbeerat();
+            } else if (currentAthanAudioType === 'morning_azkar' || currentAthanAudioType === 'evening_azkar') {
+                stopAzkar();
             } else {
                 currentAthanAudioType = 'none';
                 elements.testAthanBtn.innerHTML = '🔊 Test';
                 publishSpeakerStatus('idle', 'Speaker is Idle');
                 updateTakbeeratButtonUI();
+                updateAzkarButtonUI();
             }
         });
     }
@@ -607,6 +706,134 @@ function stopTakbeerat() {
     }
 }
 
+function playAzkar(type) {
+    stopQuran();
+    
+    // Stop any active athan/dua/takbeerat
+    elements.audio.pause();
+    elements.audio.currentTime = 0;
+    elements.audio.loop = false;
+    
+    if (takbeeratTimeout) {
+        clearTimeout(takbeeratTimeout);
+        takbeeratTimeout = null;
+    }
+    updateTakbeeratButtonUI();
+
+    if (type === 'morning') {
+        elements.audio.src = 'https://archive.org/download/adkar_sabah_masae_safar/adkar_affassi_assaba7.mp3';
+        currentAthanAudioType = 'morning_azkar';
+    } else {
+        elements.audio.src = 'https://archive.org/download/adkar_sabah_masae_safar/adkar_affassi_lmasae.mp3';
+        currentAthanAudioType = 'evening_azkar';
+    }
+    
+    updateAzkarButtonUI();
+    
+    if (elements.testAthanBtn) elements.testAthanBtn.innerHTML = '⏹ Stop';
+    
+    publishSpeakerStatus('playing_athan', `Playing ${type === 'morning' ? 'Morning' : 'Evening'} Azkar...`);
+    
+    try {
+        const playPromise = elements.audio.play();
+        if (playPromise !== undefined && typeof playPromise.catch === 'function') {
+            playPromise.catch(e => {
+                console.error("Azkar play blocked", e);
+                publishSpeakerStatus('error', 'Autoplay blocked. Tap screen.');
+            });
+        }
+    } catch (e) {
+        console.error("Azkar play blocked", e);
+        publishSpeakerStatus('error', 'Autoplay blocked. Tap screen.');
+    }
+}
+
+function stopAzkar() {
+    if (currentAthanAudioType === 'morning_azkar' || currentAthanAudioType === 'evening_azkar') {
+        elements.audio.pause();
+        elements.audio.currentTime = 0;
+        currentAthanAudioType = 'none';
+        updateAzkarButtonUI();
+        if (elements.testAthanBtn) elements.testAthanBtn.innerHTML = '🔊 Test';
+        publishSpeakerStatus('idle', 'Speaker is Idle');
+    }
+}
+
+function updateAzkarButtonUI() {
+    const isMorningPlaying = (currentAthanAudioType === 'morning_azkar');
+    const isEveningPlaying = (currentAthanAudioType === 'evening_azkar');
+    
+    const morningBtn = document.getElementById('morning-azkar-btn');
+    const joyfulMorningBtn = document.getElementById('joyful-morning-azkar-btn');
+    const eveningBtn = document.getElementById('evening-azkar-btn');
+    const joyfulEveningBtn = document.getElementById('joyful-evening-azkar-btn');
+    
+    if (morningBtn) {
+        if (isMorningPlaying) {
+            morningBtn.innerHTML = '⏹ Stop Azkar';
+            morningBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+        } else {
+            morningBtn.innerHTML = '☀️ Morning Azkar';
+            morningBtn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+        }
+    }
+    if (joyfulMorningBtn) {
+        if (isMorningPlaying) {
+            joyfulMorningBtn.innerHTML = '⏹ Stop Azkar';
+            joyfulMorningBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+        } else {
+            joyfulMorningBtn.innerHTML = '☀️ Morning Azkar';
+            joyfulMorningBtn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+        }
+    }
+    
+    if (eveningBtn) {
+        if (isEveningPlaying) {
+            eveningBtn.innerHTML = '⏹ Stop Azkar';
+            eveningBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+        } else {
+            eveningBtn.innerHTML = '🌙 Evening Azkar';
+            eveningBtn.style.background = 'linear-gradient(135deg, #6366f1, #4f46e5)';
+        }
+    }
+    if (joyfulEveningBtn) {
+        if (isEveningPlaying) {
+            joyfulEveningBtn.innerHTML = '⏹ Stop Azkar';
+            joyfulEveningBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+        } else {
+            joyfulEveningBtn.innerHTML = '🌙 Evening Azkar';
+            joyfulEveningBtn.style.background = 'linear-gradient(135deg, #6366f1, #4f46e5)';
+        }
+    }
+}
+
+function getEveningAzkarTime() {
+    if (config.eveningAzkarMode === 'asr_offset' && prayerTimes && prayerTimes['Asr']) {
+        const [h, m] = prayerTimes['Asr'].split(':');
+        let hours = parseInt(h);
+        hours = (hours + 1) % 24;
+        const formattedH = String(hours).padStart(2, '0');
+        return `${formattedH}:${m}`;
+    }
+    return config.eveningAzkarTime || '18:00';
+}
+
+let lastTriggeredAzkarTime = '';
+
+function checkAzkarTrigger(timeStr) {
+    if (timeStr === lastTriggeredAzkarTime) return;
+    
+    if (config.autoMorningAzkar && config.morningAzkarTime === timeStr) {
+        lastTriggeredAzkarTime = timeStr;
+        console.log(`Auto-playing Morning Azkar at ${timeStr}`);
+        playAzkar('morning');
+    } else if (config.autoEveningAzkar && getEveningAzkarTime() === timeStr) {
+        lastTriggeredAzkarTime = timeStr;
+        console.log(`Auto-playing Evening Azkar at ${timeStr}`);
+        playAzkar('evening');
+    }
+}
+
 function checkAndToggleTakbeeratButton() {
     const urlParams = new URLSearchParams(window.location.search);
     const forceShow = urlParams.has('testTakbeerat') || urlParams.get('test') === 'takbeerat';
@@ -720,6 +947,13 @@ function updateClock() {
     UI.setText('.current-time', `${hours}:${minutes}`);
     UI.setText('.current-seconds', seconds);
     UI.setText('.am-pm', ampm);
+
+    // Dynamic Azkar check (check once a minute when seconds === '00')
+    if (seconds === '00') {
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        checkAzkarTrigger(`${hh}:${mm}`);
+    }
 }
 
 async function fetchPrayerTimes() {
@@ -1148,7 +1382,12 @@ function publishSpeakerStatus(speakerState, detail) {
             state: 'connected',
             speakerState: currentSpeakerState,
             detail: currentSpeakerStateDetail,
-            takbeeratDuration: config.takbeeratDuration
+            takbeeratDuration: config.takbeeratDuration,
+            autoMorningAzkar: config.autoMorningAzkar,
+            morningAzkarTime: config.morningAzkarTime,
+            autoEveningAzkar: config.autoEveningAzkar,
+            eveningAzkarMode: config.eveningAzkarMode,
+            eveningAzkarTime: config.eveningAzkarTime
         }));
     }
 }
@@ -1208,11 +1447,7 @@ function initPeerServer() {
             }
             lastPingTime = Date.now();
             updateRemoteStatus(true);
-            mqttClient.publish(`anisapp/athan/${shortId}/status`, JSON.stringify({
-                state: 'connected',
-                speakerState: currentSpeakerState,
-                detail: currentSpeakerStateDetail
-            }));
+            publishSpeakerStatus(currentSpeakerState, currentSpeakerStateDetail);
         } else if (topic.endsWith('/command')) {
             console.log("Received remote command:", payload);
             handleRemoteCommand(payload);
@@ -1339,6 +1574,57 @@ function handleRemoteCommand(data) {
                 localStorage.setItem('takbeeratDuration', config.takbeeratDuration);
                 const select = document.getElementById('takbeerat-duration-select');
                 if (select) select.value = data.duration;
+            }
+            break;
+            
+        case 'play_azkar':
+            if (data.type) {
+                playAzkar(data.type);
+            }
+            break;
+
+        case 'stop_azkar':
+            stopAzkar();
+            break;
+
+        case 'change_azkar_settings':
+            if (data.autoMorningAzkar !== undefined) {
+                config.autoMorningAzkar = data.autoMorningAzkar === true || data.autoMorningAzkar === 'true';
+                localStorage.setItem('autoMorningAzkar', config.autoMorningAzkar);
+                const cb = document.getElementById('auto-morning-azkar');
+                if (cb) cb.checked = config.autoMorningAzkar;
+            }
+            if (data.morningAzkarTime) {
+                config.morningAzkarTime = data.morningAzkarTime;
+                localStorage.setItem('morningAzkarTime', config.morningAzkarTime);
+                const input = document.getElementById('morning-azkar-time');
+                if (input) input.value = config.morningAzkarTime;
+            }
+            if (data.autoEveningAzkar !== undefined) {
+                config.autoEveningAzkar = data.autoEveningAzkar === true || data.autoEveningAzkar === 'true';
+                localStorage.setItem('autoEveningAzkar', config.autoEveningAzkar);
+                const cb = document.getElementById('auto-evening-azkar');
+                if (cb) cb.checked = config.autoEveningAzkar;
+            }
+            if (data.eveningAzkarMode) {
+                config.eveningAzkarMode = data.eveningAzkarMode;
+                localStorage.setItem('eveningAzkarMode', config.eveningAzkarMode);
+                const rAsr = document.getElementById('evening-azkar-mode-asr');
+                const rCustom = document.getElementById('evening-azkar-mode-custom');
+                const input = document.getElementById('evening-azkar-time');
+                if (config.eveningAzkarMode === 'asr_offset') {
+                    if (rAsr) rAsr.checked = true;
+                    if (input) input.disabled = true;
+                } else {
+                    if (rCustom) rCustom.checked = true;
+                    if (input) input.disabled = false;
+                }
+            }
+            if (data.eveningAzkarTime) {
+                config.eveningAzkarTime = data.eveningAzkarTime;
+                localStorage.setItem('eveningAzkarTime', config.eveningAzkarTime);
+                const input = document.getElementById('evening-azkar-time');
+                if (input) input.value = config.eveningAzkarTime;
             }
             break;
             

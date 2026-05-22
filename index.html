@@ -54,6 +54,8 @@
             <div class="action-buttons" style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
                 <button class="primary-btn open-quran-btn" style="margin-top: 0;">📖 Play Quran</button>
                 <button class="primary-btn open-hadith-btn" style="margin-top: 0; background: var(--card-bg); color: var(--text-primary); border: 1px solid var(--text-secondary);">📜 Daily Hadith</button>
+                <button id="morning-azkar-btn" class="primary-btn" style="margin-top: 0; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; display: flex; align-items: center; justify-content: center; gap: 8px;">☀️ Morning Azkar</button>
+                <button id="evening-azkar-btn" class="primary-btn" style="margin-top: 0; background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; display: flex; align-items: center; justify-content: center; gap: 8px;">🌙 Evening Azkar</button>
                 <button id="takbeerat-btn" class="primary-btn" style="margin-top: 0; background: linear-gradient(135deg, #10b981, #059669); color: white; display: none; align-items: center; justify-content: center; gap: 8px;">🕋 Play Takbeerat</button>
                 <button class="icon-btn voice-cmd-btn" title="Voice Commands" style="font-size: 2rem; background: var(--card-bg); border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); margin-top: 0;">🎙️</button>
             </div>
@@ -179,6 +181,8 @@
                 <div class="joy-actions">
                     <button class="joy-btn joy-btn-primary open-quran-btn">📖 Play Quran</button>
                     <button class="joy-btn joy-btn-secondary open-hadith-btn">📜 Daily Hadith</button>
+                    <button id="joyful-morning-azkar-btn" class="joy-btn" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">☀️ Morning Azkar</button>
+                    <button id="joyful-evening-azkar-btn" class="joy-btn" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: white;">🌙 Evening Azkar</button>
                     <button id="joyful-takbeerat-btn" class="joy-btn" style="background: linear-gradient(135deg, #10b981, #059669); color: white; display: none;">🕋 Play Takbeerat</button>
                     <button class="joy-btn joy-btn-secondary voice-cmd-btn" style="max-width: 50px;">🎙️</button>
                 </div>
@@ -287,6 +291,35 @@
                 <option value="5">5 Minutes</option>
                 <option value="continuous">Continuous Loop</option>
             </select>
+
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 1.5rem; padding-top: 1rem;">
+                <div class="modal-label" style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--accent-color);">Azkar Auto-Play</div>
+                
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem;">
+                    <label for="auto-morning-azkar" style="font-size: 0.95rem;">Auto-Play Morning Azkar</label>
+                    <input type="checkbox" id="auto-morning-azkar" style="width: 20px; height: 20px; accent-color: var(--accent-color);">
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.2rem; padding-left: 1rem;">
+                    <span style="font-size: 0.9rem; color: var(--text-secondary);">Play Time:</span>
+                    <input type="time" id="morning-azkar-time" class="modal-select" style="flex: 1; margin: 0; padding: 6px 10px; border-radius: 6px;">
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.8rem;">
+                    <label for="auto-evening-azkar" style="font-size: 0.95rem;">Auto-Play Evening Azkar</label>
+                    <input type="checkbox" id="auto-evening-azkar" style="width: 20px; height: 20px; accent-color: var(--accent-color);">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; padding-left: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="radio" id="evening-azkar-mode-asr" name="evening-azkar-mode" value="asr_offset" checked style="width:16px; height:16px; accent-color: var(--accent-color);">
+                        <label for="evening-azkar-mode-asr" style="font-size: 0.9rem;">1 hour after Asr</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="radio" id="evening-azkar-mode-custom" name="evening-azkar-mode" value="custom" style="width:16px; height:16px; accent-color: var(--accent-color);">
+                        <label for="evening-azkar-mode-custom" style="font-size: 0.9rem; margin-right: 0.5rem;">Custom Time:</label>
+                        <input type="time" id="evening-azkar-time" class="modal-select" style="flex: 1; max-width: 120px; margin: 0; padding: 4px 8px; border-radius: 6px;">
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
