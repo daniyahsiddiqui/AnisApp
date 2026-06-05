@@ -317,7 +317,8 @@ function setupEventListeners() {
     
     // play-kahf-btn Friday Surah Al-Kahf triggers
     UI.on('.play-kahf-btn', 'click', async () => {
-        elements.quranSurahSelect.value = 18; // Surah Al-Kahf is Surah number 18
+        elements.quranSurahSelect.value = "18"; // Set dropdown value to 18
+        elements.quranSurahSelect.dispatchEvent(new Event('change')); // Trigger change listener
         audioQueue = []; // Clear current queue to force rebuild
         currentQueueIndex = 0; // Reset index
         await loadSurahAudioData(18);
