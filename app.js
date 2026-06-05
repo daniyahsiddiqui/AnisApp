@@ -188,6 +188,9 @@ async function init() {
     // Check banners
     checkFridayReminders();
     
+    // Load quick stats counters
+    updateQuickStatsUI();
+
     // Do location detection and timing fetch asynchronously without blocking UI or PeerJS registration
     detectLocation()
         .then(() => fetchPrayerTimes())
@@ -613,6 +616,7 @@ function setupVoiceRecognition() {
         UI.addClass('.voice-trigger-btn', 'listening');
         UI.setText('.voice-status', "Listening...");
         publishSpeakerStatus('listening', 'Listening for voice command...');
+        incrementQuickStat('stats_voice_count');
     };
 
     recognition.onresult = async function(event) {
@@ -930,6 +934,7 @@ function playAzkar(type) {
     if (elements.testAthanBtn) elements.testAthanBtn.innerHTML = '⏹ Stop';
     
     publishSpeakerStatus('playing_athan', `Playing ${type === 'morning' ? 'Morning' : 'Evening'} Azkar...`);
+    incrementQuickStat('stats_azkar_count');
     
     try {
         const playPromise = elements.audio.play();
@@ -1621,6 +1626,7 @@ function startOrResumeQuran() {
     isQuranPlaying = true;
     elements.quranPlayPause.innerHTML = '⏸ Pause';
     elements.fsPlayPauseBtn.innerHTML = '⏸';
+    incrementQuickStat('stats_quran_count');
     
     if (elements.quranAudio.src && elements.quranAudio.paused && elements.quranAudio.currentTime > 0 && currentQueueIndex < audioQueue.length) {
         try {
@@ -2264,6 +2270,33 @@ document.addEventListener('pointerdown', (e) => {
         e.stopPropagation();
     }
 });
+
+// --- Premium Quick Statistics Tracker ---
+function updateQuickStatsUI() {
+    const qCount = localStorage.getItem('stats_quran_count') || 0;
+    const aCount = localStorage.getItem('stats_azkar_count') || 0;
+    const vCount = localStorage.getItem('stats_voice_count') || 0;
+
+    const elQ = document.getElementById('stats-quran-count');
+    const elA = document.getElementById('stats-azkar-count');
+    const elV = document.getElementById('stats-voice-count');
+    const elQJoy = document.getElementById('joy-stats-quran-count');
+    const elAJoy = document.getElementById('joy-stats-azkar-count');
+    const elVJoy = document.getElementById('joy-stats-voice-count');
+
+    if (elQ) elQ.textContent = qCount;
+    if (elA) elA.textContent = aCount;
+    if (elV) elV.textContent = vCount;
+    if (elQJoy) elQJoy.textContent = qCount;
+    if (elAJoy) elAJoy.textContent = aCount;
+    if (elVJoy) elVJoy.textContent = vCount;
+}
+
+function incrementQuickStat(key) {
+    let current = parseInt(localStorage.getItem(key)) || 0;
+    localStorage.setItem(key, current + 1);
+    updateQuickStatsUI();
+}
 
 // Start app
 init();
