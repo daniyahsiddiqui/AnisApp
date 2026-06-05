@@ -158,7 +158,7 @@ body:not(.theme-joyful) #joyful-layout {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 2rem;
+    padding: 1rem;
     background: radial-gradient(circle at center, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
 }
 
@@ -166,7 +166,7 @@ body:not(.theme-joyful) #joyful-layout {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 300;
 }
 
@@ -185,7 +185,7 @@ body:not(.theme-joyful) #joyful-layout {
 
 .hijri {
     color: var(--accent-color);
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 400;
 }
 
@@ -201,26 +201,26 @@ body:not(.theme-joyful) #joyful-layout {
 .time-display {
     display: flex;
     align-items: baseline;
-    gap: 1rem;
-    margin-bottom: 1rem;
+    gap: 0.8rem;
+    margin-bottom: 0.2rem;
 }
 
 .current-time {
-    font-size: clamp(5rem, 12vw, 8rem);
+    font-size: clamp(3.5rem, 10vw, 6.5rem);
     font-weight: 800;
     line-height: 1;
     letter-spacing: -2px;
 }
 
 .am-pm {
-    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-size: clamp(1.2rem, 3vw, 2rem);
     font-weight: 600;
     color: var(--text-secondary);
 }
 
 .countdown-display {
     background: var(--card-bg);
-    padding: 1.5rem 3rem;
+    padding: 0.8rem 2rem;
     border-radius: 20px;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -228,11 +228,11 @@ body:not(.theme-joyful) #joyful-layout {
 }
 
 .countdown-display p {
-    font-size: 1.2rem;
+    font-size: 1rem;
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 2px;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.2rem;
 }
 
 .next-prayer-name {
@@ -241,7 +241,7 @@ body:not(.theme-joyful) #joyful-layout {
 }
 
 .countdown-timer {
-    font-size: clamp(2rem, 5vw, 3rem);
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
 }
@@ -250,20 +250,20 @@ body:not(.theme-joyful) #joyful-layout {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 0.8rem;
     width: 100%;
 }
 
 .prayer-card {
     flex: 1;
-    min-width: 140px;
+    min-width: 120px;
     background: var(--card-bg);
-    padding: 1.8rem 1rem;
+    padding: 1rem 0.5rem;
     border-radius: 16px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.3rem;
     border: 1px solid rgba(255, 255, 255, 0.05);
     transition: all 0.3s ease;
 }
