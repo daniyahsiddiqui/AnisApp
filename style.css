@@ -69,17 +69,72 @@ body.theme-gold {
     --modal-bg: rgba(26, 26, 26, 0.95);
 }
 
+body.theme-mosque {
+    --text-primary: #ffffff;
+    --text-secondary: #cbd5e1;
+    --accent-color: #fca5a5;
+    --card-bg: rgba(15, 23, 42, 0.45);
+    --active-prayer-bg: rgba(248, 113, 113, 0.15);
+    --active-prayer-border: #f87171;
+    --gradient-1: #09090b;
+    --gradient-2: #1e1b4b;
+    --modal-bg: rgba(15, 23, 42, 0.95);
+    background-image: linear-gradient(rgba(15, 23, 42, 0.55), rgba(15, 23, 42, 0.55)), url('https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?q=80&w=1920&auto=format&fit=crop');
+}
+
+body.theme-mist {
+    --text-primary: #ffffff;
+    --text-secondary: #a7f3d0;
+    --accent-color: #34d399;
+    --card-bg: rgba(2, 44, 34, 0.5);
+    --active-prayer-bg: rgba(52, 211, 153, 0.15);
+    --active-prayer-border: #34d399;
+    --gradient-1: #022c22;
+    --gradient-2: #064e3b;
+    --modal-bg: rgba(2, 44, 34, 0.95);
+    background-image: linear-gradient(rgba(2, 44, 34, 0.6), rgba(2, 44, 34, 0.6)), url('https://images.unsplash.com/photo-1502082553048-f009c37129b9?q=80&w=1920&auto=format&fit=crop');
+}
+
+body.theme-pattern {
+    --text-primary: #ffffff;
+    --text-secondary: #93c5fd;
+    --accent-color: #3b82f6;
+    --card-bg: rgba(15, 23, 42, 0.65);
+    --active-prayer-bg: rgba(59, 130, 246, 0.15);
+    --active-prayer-border: #3b82f6;
+    --gradient-1: #0f172a;
+    --gradient-2: #1e3a8a;
+    --modal-bg: rgba(15, 23, 42, 0.95);
+    background-image: linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.65)), url('https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?q=80&w=1920&auto=format&fit=crop');
+}
+
+body.theme-cosmic {
+    --text-primary: #ffffff;
+    --text-secondary: #f5d0fe;
+    --accent-color: #c084fc;
+    --card-bg: rgba(24, 24, 37, 0.5);
+    --active-prayer-bg: rgba(192, 132, 252, 0.15);
+    --active-prayer-border: #c084fc;
+    --gradient-1: #0f0714;
+    --gradient-2: #1c0926;
+    --modal-bg: rgba(24, 24, 37, 0.95);
+    background-image: linear-gradient(rgba(15, 7, 20, 0.65), rgba(15, 7, 20, 0.65)), url('https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?q=80&w=1920&auto=format&fit=crop');
+}
+
 body {
     font-family: 'Outfit', sans-serif;
     color: var(--text-primary);
     min-height: 100vh;
     overflow-x: hidden;
     background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
 }
 
 body.theme-joyful {
     font-family: var(--joy-font-body);
-    background: linear-gradient(160deg, var(--joy-bg-from) 0%, var(--joy-bg-mid) 50%, var(--joy-bg-to) 100%);
+    background: linear-gradient(160deg, var(--joy-bg-from) 0%, var(--joy-bg-mid) 50%, var(--joy-bg-to) 100%) !important;
 }
 
 /* ==========================================
@@ -201,9 +256,9 @@ body:not(.theme-joyful) #joyful-layout {
 
 .prayer-card {
     flex: 1;
-    min-width: 130px;
+    min-width: 140px;
     background: var(--card-bg);
-    padding: 1.5rem 1rem;
+    padding: 1.8rem 1rem;
     border-radius: 16px;
     display: flex;
     flex-direction: column;
@@ -221,8 +276,8 @@ body:not(.theme-joyful) #joyful-layout {
 }
 
 .prayer-name {
-    font-size: 1.2rem;
-    font-weight: 400;
+    font-size: 1.35rem;
+    font-weight: 500;
     color: var(--text-secondary);
 }
 
@@ -232,8 +287,8 @@ body:not(.theme-joyful) #joyful-layout {
 }
 
 .prayer-time {
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: 2.1rem;
+    font-weight: 700;
 }
 
 @keyframes classicPulse {
@@ -671,7 +726,7 @@ body.theme-joyful .countdown-timer {
 
 .joy-prayer-name {
     font-family: var(--joy-font-body);
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.6px;
@@ -680,7 +735,7 @@ body.theme-joyful .countdown-timer {
 
 .joy-prayer-time {
     font-family: var(--joy-font-display);
-    font-size: 13px;
+    font-size: 18px;
     color: var(--joy-pink);
 }
 
@@ -835,12 +890,12 @@ body.theme-joyful .countdown-timer {
     .joy-prayer-name {
         flex: 1;
         text-align: left;
-        font-size: 11px;
+        font-size: 13px;
         letter-spacing: 1px;
     }
 
     .joy-prayer-time {
-        font-size: 15px;
+        font-size: 20px;
         flex-shrink: 0;
     }
 
@@ -850,7 +905,7 @@ body.theme-joyful .countdown-timer {
 
     .joy-prayer-item.active .joy-prayer-time {
         color: var(--joy-purple-dark);
-        font-size: 15px;
+        font-size: 20px;
     }
 
     /* Voice status label */
@@ -1208,4 +1263,354 @@ body.theme-joyful #fs-status-text {
     color: var(--joy-purple);
     font-weight: 700;
     font-family: var(--joy-font-body);
+}
+
+/* ==========================================
+   BUTTON LAYOUT THEMES
+   ========================================== */
+
+/* Button Layout Visibility Control */
+.button-layout-container {
+    display: none !important;
+}
+body.layout-categorized:not(.theme-joyful) #layout-categorized {
+    display: flex !important;
+}
+body.layout-pill-dock:not(.theme-joyful) #layout-pill-dock {
+    display: flex !important;
+}
+body.layout-bubble-grid:not(.theme-joyful) #layout-bubble-grid {
+    display: flex !important;
+}
+body.theme-joyful.layout-categorized #joyful-layout-categorized {
+    display: flex !important;
+}
+body.theme-joyful.layout-pill-dock #joyful-layout-pill-dock {
+    display: flex !important;
+}
+body.theme-joyful.layout-bubble-grid #joyful-layout-bubble-grid {
+    display: flex !important;
+}
+
+/* Layout 1: Categorized Dashboard */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.2rem;
+    margin-top: 1.5rem;
+    width: 100%;
+    max-width: 700px;
+    justify-content: center;
+}
+.dashboard-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+.dashboard-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+.card-icon {
+    font-size: 1.8rem;
+}
+.dashboard-card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.2rem;
+}
+.card-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}
+.dashboard-card button {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s, transform 0.1s;
+}
+.dashboard-card button:active {
+    transform: scale(0.97);
+}
+.dashboard-card .primary-btn-custom {
+    background: var(--accent-color);
+    color: white;
+}
+.dashboard-card .secondary-btn-custom {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+.dashboard-card .morning-btn {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+.dashboard-card .evening-btn {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: white;
+}
+.dashboard-card .takbeerat-btn-custom {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+/* Layout 2: Minimalist Pill Dock */
+.pill-main-actions {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+}
+.pill-main-actions button {
+    padding: 0.8rem 2rem;
+    border-radius: 30px;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+.pill-dock {
+    display: flex;
+    align-items: center;
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 40px;
+    gap: 1.2rem;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+.pill-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    transition: background 0.2s, transform 0.2s;
+}
+.pill-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: scale(1.1);
+}
+.pill-btn .led-indicator {
+    position: absolute;
+    bottom: 2px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: transparent;
+}
+.pill-btn.active .led-indicator {
+    background: #06b6d4;
+    box-shadow: 0 0 8px #06b6d4;
+    animation: ledPulse 1.5s infinite;
+}
+@keyframes ledPulse {
+    0% { opacity: 0.4; }
+    50% { opacity: 1; }
+    100% { opacity: 0.4; }
+}
+
+/* Layout 3: Bubble Grid */
+.bubble-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 1rem;
+    width: 100%;
+    max-width: 500px;
+    margin-top: 1rem;
+    justify-content: center;
+}
+.bubble-btn {
+    aspect-ratio: 1;
+    border-radius: 24px;
+    border: none;
+    background: var(--card-bg);
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
+    font-family: inherit;
+    padding: 0.5rem;
+}
+.bubble-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+.bubble-btn:active {
+    transform: scale(0.95);
+}
+.bubble-icon {
+    font-size: 2.2rem;
+    line-height: 1;
+}
+.bubble-text {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+/* Theme/Layout overrides for Joyful layout */
+body.theme-joyful .dashboard-card {
+    background: var(--joy-white-glass);
+    border: 1.5px solid rgba(168, 85, 247, 0.2);
+}
+body.theme-joyful .dashboard-card h3 {
+    color: var(--joy-purple);
+    font-family: var(--joy-font-body);
+}
+body.theme-joyful .pill-dock {
+    background: var(--joy-white-glass);
+    border: 1.5px solid rgba(168, 85, 247, 0.2);
+}
+body.theme-joyful .bubble-btn {
+    background: var(--joy-white-glass);
+    border: 2px solid rgba(168, 85, 247, 0.25);
+    border-radius: 28px;
+}
+body.theme-joyful .bubble-text {
+    color: var(--joy-purple);
+    font-family: var(--joy-font-body);
+}
+
+/* Side-by-Side Dashboard Layout */
+.dashboard-side-by-side {
+    display: flex;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 800px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 1.2rem;
+}
+
+.dashboard-side-by-side .dashboard-card {
+    flex: 1;
+    min-width: 280px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Alert Banners Styling */
+.alert-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: rgba(217, 119, 6, 0.12);
+    border: 1px solid var(--accent-color);
+    border-radius: 12px;
+    padding: 10px 16px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    width: 100%;
+    box-sizing: border-box;
+    animation: slideDown 0.4s ease-out;
+}
+
+.alert-banner.holiday-alert {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: #10b981;
+}
+
+.joy-alert-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--joy-white-glass);
+    border: 1.5px solid var(--joy-pink-light);
+    border-radius: 16px;
+    padding: 8px 12px;
+    color: var(--joy-purple-dark);
+    font-family: var(--joy-font-body);
+    font-size: 0.85rem;
+    font-weight: 700;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    animation: slideDown 0.4s ease-out;
+}
+
+.joy-alert-banner.joy-holiday-alert {
+    border-color: var(--joy-purple-light);
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Qibla Modal and compass animation */
+@keyframes compassFloat {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Sleep / Night Clock Auto-Dim Mode */
+.sleep-mode-active {
+    filter: brightness(0.2) contrast(1.2) !important;
+    background: black !important;
+    transition: filter 3s ease-in-out, background 3s ease-in-out;
+}
+.sleep-mode-active .app-container,
+.sleep-mode-active .joy-screen {
+    background: transparent !important;
+}
+.sleep-mode-active #alert-banners-container,
+.sleep-mode-active #joy-alert-banners-container,
+.sleep-mode-active #layout-categorized,
+.sleep-mode-active #joyful-layout-categorized,
+.sleep-mode-active #layout-pill-dock,
+.sleep-mode-active #joyful-layout-pill-dock,
+.sleep-mode-active #layout-bubble-grid,
+.sleep-mode-active #joyful-layout-bubble-grid,
+.sleep-mode-active footer,
+.sleep-mode-active .joy-right-col,
+.sleep-mode-active .top-bar,
+.sleep-mode-active svg {
+    display: none !important;
+}
+.sleep-mode-active .time-display,
+.sleep-mode-active .joy-clock-wrap {
+    margin-top: auto;
+    margin-bottom: auto;
+}
+.sleep-mode-active .current-time,
+.sleep-mode-active .joy-time {
+    color: #ff3333 !important;
+    text-shadow: 0 0 20px #ff3333 !important;
+    font-size: 8rem !important;
+}
+.sleep-mode-active .am-pm,
+.sleep-mode-active .joy-ampm {
+    color: #ff3333 !important;
+    font-size: 2rem !important;
+}
+.sleep-mode-active .countdown-display,
+.sleep-mode-active .joy-next {
+    display: none !important;
 }

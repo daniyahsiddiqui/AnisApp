@@ -26,15 +26,22 @@
     <div id="classic-layout" class="app-container">
         <!-- Header: Top bar with location and date -->
         <header class="top-bar">
-            <div class="location-container">
-                <span class="icon">📍</span>
-                <span class="location-text">Loading Location...</span>
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap: wrap;">
+                <div class="location-container">
+                    <span class="icon">📍</span>
+                    <span class="location-text">Loading Location...</span>
+                </div>
+                <div class="weather-container" id="weather-widget" style="display:none; align-items: center; gap: 0.5rem; font-weight: 500; font-size: 0.95rem; color: var(--text-secondary); background: var(--card-bg); padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(10px);">
+                    <span id="weather-icon">☀️</span>
+                    <span id="weather-temp">--°F</span>
+                </div>
             </div>
             <div class="date-container">
                 <span class="gregorian-date">Loading...</span>
                 <span class="hijri-date hijri">Loading...</span>
             </div>
             <div style="display:flex; gap:0.5rem; align-items: center;">
+                <button class="icon-btn qibla-btn" title="Qibla Compass" id="qibla-btn" style="font-size: 1.2rem;">🧭</button>
                 <button class="icon-btn remote-btn" title="Remote Control" id="remote-control-btn" style="font-size: 1.2rem;">📶</button>
                 <button class="icon-btn mute-btn" title="Mute/Unmute Athan">🔊</button>
                 <button class="icon-btn settings-btn" title="Settings">⚙️</button>
@@ -43,6 +50,18 @@
 
         <!-- Main Content: Current Time and Next Prayer Countdown -->
         <main class="main-content">
+            <!-- Top Alert Banners (Friday Kahf & Holiday Countdown) -->
+            <div id="alert-banners-container" style="width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1rem; width: 100%;">
+                <div id="friday-kahf-banner" class="alert-banner" style="display: none;">
+                    <span class="banner-icon">🕌</span>
+                    <span class="banner-text">Friday Reminder: Don't forget to read Surah Al-Kahf today!</span>
+                </div>
+                <div id="holiday-banner" class="alert-banner holiday-alert" style="display: none;">
+                    <span class="banner-icon">🕋</span>
+                    <span id="holiday-banner-text" class="banner-text">Loading Islamic Occasion Countdown...</span>
+                </div>
+            </div>
+
             <div class="time-display">
                 <h1 class="current-time">--:--</h1>
                 <span class="am-pm">--</span>
@@ -51,14 +70,73 @@
                 <p>Next Prayer: <span class="next-prayer-name">--</span></p>
                 <h2 class="countdown-timer">--:--:--</h2>
             </div>
-            <div class="action-buttons" style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
-                <button class="primary-btn open-quran-btn" style="margin-top: 0;">📖 Play Quran</button>
-                <button class="primary-btn open-hadith-btn" style="margin-top: 0; background: var(--card-bg); color: var(--text-primary); border: 1px solid var(--text-secondary);">📜 Daily Hadith</button>
-                <button id="morning-azkar-btn" class="primary-btn" style="margin-top: 0; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; display: flex; align-items: center; justify-content: center; gap: 8px;">☀️ Morning Azkar</button>
-                <button id="evening-azkar-btn" class="primary-btn" style="margin-top: 0; background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; display: flex; align-items: center; justify-content: center; gap: 8px;">🌙 Evening Azkar</button>
-                <button id="takbeerat-btn" class="primary-btn" style="margin-top: 0; background: linear-gradient(135deg, #10b981, #059669); color: white; display: none; align-items: center; justify-content: center; gap: 8px;">🕋 Play Takbeerat</button>
-                <button class="icon-btn voice-cmd-btn" title="Voice Commands" style="font-size: 2rem; background: var(--card-bg); border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); margin-top: 0;">🎙️</button>
+            <!-- Option 1: Categorized Dashboard -->
+            <div id="layout-categorized" class="button-layout-container" style="width: 100%; justify-content: center; margin-top: 1.5rem;">
+                <div class="dashboard-side-by-side">
+                    <!-- Daily Reminder Board (Hadith & Quran Verse card) -->
+                    <div class="dashboard-card reminder-board-card">
+                        <span class="card-icon">📜</span>
+                        <h3>Daily Reminder Board</h3>
+                        <div id="reminder-board-content" style="flex: 1; display: flex; flex-direction: column; justify-content: center; width: 100%; text-align: center; padding: 0.5rem 0;">
+                            <p id="reminder-board-text" style="font-size: 0.95rem; line-height: 1.5; color: var(--text-primary); font-style: italic; margin-bottom: 0.5rem; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;">"Actions are judged by intentions..."</p>
+                            <p id="reminder-board-ref" style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary); margin: 0; text-align: right;">Sahih al-Bukhari</p>
+                        </div>
+                    </div>
+
+                    <!-- Media Drawer Card -->
+                    <div class="dashboard-card media-center-card">
+                        <span class="card-icon">📻</span>
+                        <h3>Media Center</h3>
+                        <div class="card-buttons">
+                            <button class="primary-btn-custom quran-trigger-btn" style="background: var(--accent-color); color: white;">📖 Play Quran</button>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; width: 100%;">
+                                <button class="morning-btn azkar-morning-trigger-btn" style="padding: 0.5rem;">☀️ Morning</button>
+                                <button class="evening-btn azkar-evening-trigger-btn" style="padding: 0.5rem;">🌙 Evening</button>
+                            </div>
+                            <button class="takbeerat-btn-custom takbeerat-trigger-btn takbeerat-card-container" style="display: none;">🕋 Play Takbeerat</button>
+                            <button class="secondary-btn-custom voice-trigger-btn">🎙️ Listen Voice</button>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <!-- Option 2: Minimalist Pill Media Dock -->
+            <div id="layout-pill-dock" class="button-layout-container" style="flex-direction: column; align-items: center; justify-content: center; width: 100%; gap: 1rem; margin-top: 1.5rem;">
+                <div class="pill-main-actions">
+                    <button class="primary-btn quran-trigger-btn" style="margin-top: 0;">📖 Play Quran</button>
+                </div>
+                <div class="pill-dock">
+                    <button class="pill-btn azkar-morning-trigger-btn" title="Morning Azkar">☀️<span class="led-indicator"></span></button>
+                    <button class="pill-btn azkar-evening-trigger-btn" title="Evening Azkar">🌙<span class="led-indicator"></span></button>
+                    <button class="pill-btn takbeerat-trigger-btn takbeerat-pill-container" title="Play Takbeerat" style="display: none;">🕋<span class="led-indicator"></span></button>
+                    <button class="pill-btn voice-trigger-btn" title="Voice Commands">🎙️</button>
+                </div>
+            </div>
+
+            <!-- Option 3: Bouncy Bubble Grid -->
+            <div id="layout-bubble-grid" class="button-layout-container" style="width: 100%; justify-content: center;">
+                <div class="bubble-grid">
+                    <button class="bubble-btn quran-trigger-btn">
+                        <span class="bubble-icon">📖</span>
+                        <span class="bubble-text">Play Quran</span>
+                    </button>
+                    <button class="bubble-btn azkar-morning-trigger-btn">
+                        <span class="bubble-icon">☀️</span>
+                        <span class="bubble-text">Morning</span>
+                    </button>
+                    <button class="bubble-btn azkar-evening-trigger-btn">
+                        <span class="bubble-icon">🌙</span>
+                        <span class="bubble-text">Evening</span>
+                    </button>
+                    <button class="bubble-btn takbeerat-trigger-btn takbeerat-bubble-container" style="display: none;">
+                        <span class="bubble-icon">🕋</span>
+                        <span class="bubble-text">Takbeerat</span>
+                    </button>
+                    <button class="bubble-btn voice-trigger-btn">
+                        <span class="bubble-icon">🎙️</span>
+                        <span class="bubble-text">Voice</span>
+                    </button>
+                </div>
             <div class="voice-status" style="margin-top: 0.5rem; color: var(--accent-color); font-size: 0.9rem; min-height: 1.2em;"></div>
         </main>
 
@@ -125,15 +203,32 @@
             <span class="joy-float" style="color:var(--joy-purple-light);">✦</span>
         </div>
 
+        <button class="joy-gear qibla-btn" style="right: 152px;" aria-label="Qibla Compass" id="joyful-qibla-btn">🧭</button>
         <button class="joy-gear remote-btn" style="right: 106px;" aria-label="Remote Control" id="joyful-remote-control-btn">📶</button>
         <button class="joy-gear mute-btn" style="right: 60px;" aria-label="Mute/Unmute Athan">🔊</button>
         <button class="joy-gear settings-btn" aria-label="Settings">⚙️</button>
 
         <main class="joy-screen">
+            <!-- Alert Banners for Joyful Layout -->
+            <div id="joy-alert-banners-container" style="width: 100%; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+                <div id="joy-friday-kahf-banner" class="joy-alert-banner" style="display: none;">
+                    <span>🕌 Friday: Read Surah Al-Kahf!</span>
+                </div>
+                <div id="joy-holiday-banner" class="joy-alert-banner joy-holiday-alert" style="display: none;">
+                    <span id="joy-holiday-banner-text">Occasion Countdown...</span>
+                </div>
+            </div>
+
             <div class="joy-left-col">
-                <div class="joy-location">
-                    <span class="joy-location-pin">📍</span>
-                    <span class="location-text">Loading location...</span>
+                <div class="joy-location" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span class="joy-location-pin">📍</span>
+                        <span class="location-text">Loading location...</span>
+                    </div>
+                    <div id="joy-weather-widget" style="display:none; align-items:center; gap:4px; font-weight:700; color:var(--joy-purple); padding-left: 10px; border-left: 1px dashed rgba(168, 85, 247, 0.3);">
+                        <span id="joy-weather-icon">☀️</span>
+                        <span id="joy-weather-temp">--°F</span>
+                    </div>
                 </div>
 
                 <div class="joy-bismillah" style="margin-top: 5px;">بِسْمِ اللَّهِ</div>
@@ -178,13 +273,73 @@
                     Next prayer: <span class="next-prayer-name">--</span> - <span class="countdown-timer">--:--:--</span>
                 </div>
 
-                <div class="joy-actions">
-                    <button class="joy-btn joy-btn-primary open-quran-btn">📖 Play Quran</button>
-                    <button class="joy-btn joy-btn-secondary open-hadith-btn">📜 Daily Hadith</button>
-                    <button id="joyful-morning-azkar-btn" class="joy-btn" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">☀️ Morning Azkar</button>
-                    <button id="joyful-evening-azkar-btn" class="joy-btn" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: white;">🌙 Evening Azkar</button>
-                    <button id="joyful-takbeerat-btn" class="joy-btn" style="background: linear-gradient(135deg, #10b981, #059669); color: white; display: none;">🕋 Play Takbeerat</button>
-                    <button class="joy-btn joy-btn-secondary voice-cmd-btn" style="max-width: 50px;">🎙️</button>
+                 <!-- Option 1: Categorized Dashboard -->
+                <div id="joyful-layout-categorized" class="button-layout-container" style="width: 100%;">
+                    <div class="dashboard-side-by-side" style="margin-top: 10px; width: 100%;">
+                        <!-- Daily Reminder Board (Hadith & Quran Verse card) -->
+                        <div class="dashboard-card reminder-board-card">
+                            <span class="card-icon">📜</span>
+                            <h3>Daily Reminder Board</h3>
+                            <div id="joy-reminder-board-content" style="flex: 1; display: flex; flex-direction: column; justify-content: center; width: 100%; text-align: center; padding: 0.2rem 0;">
+                                <p id="joy-reminder-board-text" style="font-size: 0.85rem; line-height: 1.4; color: var(--joy-purple-dark); font-style: italic; margin-bottom: 0.3rem; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;">"Actions are judged by intentions..."</p>
+                                <p id="joy-reminder-board-ref" style="font-size: 0.75rem; font-weight: bold; color: var(--joy-pink); margin: 0; text-align: right;">Sahih al-Bukhari</p>
+                            </div>
+                        </div>
+
+                        <!-- Media Drawer Card -->
+                        <div class="dashboard-card media-center-card">
+                            <span class="card-icon">📻</span>
+                            <h3>Media Center</h3>
+                            <div class="card-buttons">
+                                <button class="joy-btn joy-btn-primary quran-trigger-btn" style="padding: 0.5rem; margin-top: 0; font-size: 0.85rem;">📖 Play Quran</button>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; width: 100%;">
+                                    <button class="pill-btn azkar-morning-trigger-btn" style="width: 100%; height: 35px; border-radius: 8px; font-size: 0.85rem; padding: 0;">☀️ Morn</button>
+                                    <button class="pill-btn azkar-evening-trigger-btn" style="width: 100%; height: 35px; border-radius: 8px; font-size: 0.85rem; padding: 0;">🌙 Eve</button>
+                                </div>
+                                <button class="takbeerat-trigger-btn takbeerat-card-container joy-btn joy-btn-primary" style="display: none; padding: 0.5rem; margin-top: 0; font-size: 0.85rem; background: linear-gradient(135deg, #10b981, #059669);">🕋 Play Takbeerat</button>
+                                <button class="secondary-btn-custom voice-trigger-btn" style="padding: 0.5rem; font-size: 0.85rem;">🎙️ Listen</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Option 2: Minimalist Pill Media Dock -->
+                <div id="joyful-layout-pill-dock" class="button-layout-container" style="flex-direction: column; align-items: center; justify-content: center; width: 100%; gap: 10px; margin-top: 10px;">
+                    <div class="pill-main-actions">
+                        <button class="joy-btn joy-btn-primary quran-trigger-btn" style="margin-top: 0;">📖 Play Quran</button>
+                    </div>
+                    <div class="pill-dock">
+                        <button class="pill-btn azkar-morning-trigger-btn" title="Morning Azkar">☀️<span class="led-indicator"></span></button>
+                        <button class="pill-btn azkar-evening-trigger-btn" title="Evening Azkar">🌙<span class="led-indicator"></span></button>
+                        <button class="pill-btn takbeerat-trigger-btn takbeerat-pill-container" title="Play Takbeerat" style="display: none;">🕋<span class="led-indicator"></span></button>
+                        <button class="pill-btn voice-trigger-btn" title="Voice Commands">🎙️</button>
+                    </div>
+                </div>
+
+                <!-- Option 3: Bouncy Bubble Grid -->
+                <div id="joyful-layout-bubble-grid" class="button-layout-container" style="width: 100%;">
+                    <div class="bubble-grid" style="margin-top: 10px;">
+                        <button class="bubble-btn quran-trigger-btn">
+                            <span class="bubble-icon">📖</span>
+                            <span class="bubble-text">Play Quran</span>
+                        </button>
+                        <button class="bubble-btn azkar-morning-trigger-btn">
+                            <span class="bubble-icon">☀️</span>
+                            <span class="bubble-text">Morning</span>
+                        </button>
+                        <button class="bubble-btn azkar-evening-trigger-btn">
+                            <span class="bubble-icon">🌙</span>
+                            <span class="bubble-text">Evening</span>
+                        </button>
+                        <button class="bubble-btn takbeerat-trigger-btn takbeerat-bubble-container" style="display: none;">
+                            <span class="bubble-icon">🕋</span>
+                            <span class="bubble-text">Takbeerat</span>
+                        </button>
+                        <button class="bubble-btn voice-trigger-btn">
+                            <span class="bubble-icon">🎙️</span>
+                            <span class="bubble-text">Voice</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="voice-status" style="margin-top: 0.2rem; color: var(--joy-pink); font-size: 0.8rem; min-height: 1.2em;"></div>
             </div>
@@ -239,12 +394,29 @@
             </div>
             
             <div class="modal-label">Theme / Layout</div>
-            <div style="display:flex;gap:1rem;margin-bottom:1.5rem;">
+            <div style="display:flex; gap:0.6rem; flex-wrap:wrap; margin-bottom:1.5rem;">
                 <div class="theme-swatch" data-theme="joyful" style="background: linear-gradient(135deg, #F9A8D4, #7C3AED);" title="Joyful Theme (Dynamic)"></div>
                 <div class="theme-swatch" data-theme="sand" style="background: #fde68a;" title="Desert Sand (Classic)"></div>
                 <div class="theme-swatch" data-theme="rose" style="background: #fecdd3;" title="Rose Gold (Classic)"></div>
                 <div class="theme-swatch" data-theme="gold" style="background: #1a1a1a; border: 2px solid #eab308;" title="Midnight Gold (Classic)"></div>
+                <div class="theme-swatch" data-theme="mosque" style="background: #1e1b4b; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 1.5px solid #4f46e5; color: #a5b4fc;" title="Mosque Silhouette">🕌</div>
+                <div class="theme-swatch" data-theme="mist" style="background: #022c22; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 1.5px solid #059669; color: #6ee7b7;" title="Misty Nature">🌲</div>
+                <div class="theme-swatch" data-theme="pattern" style="background: #0f172a; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 1.5px solid #2563eb; color: #93c5fd;" title="Geometric Pattern">🔷</div>
+                <div class="theme-swatch" data-theme="cosmic" style="background: #17031a; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 1.5px solid #9333ea; color: #f5d0fe;" title="Cosmic Galaxy">🌌</div>
             </div>
+
+            <div class="modal-label">Button Layout Theme</div>
+            <select id="button-layout-select" class="modal-select" style="margin-bottom: 1.5rem; width: 100%; box-sizing: border-box;">
+                <option value="categorized">Categorized Dashboard</option>
+                <option value="pill-dock">Minimalist Pill Dock</option>
+                <option value="bubble_grid">Bubble Grid</option>
+            </select>
+
+            <div class="modal-label">Weather Temperature Unit</div>
+            <select id="weather-unit-select" class="modal-select" style="margin-bottom: 1.5rem; width: 100%; box-sizing: border-box;">
+                <option value="fahrenheit">Fahrenheit (°F)</option>
+                <option value="celsius">Celsius (°C)</option>
+            </select>
 
             <div class="modal-label">Location Override</div>
             <div style="display:flex; gap: 10px; align-items: center; margin-bottom: 1.5rem;">
@@ -291,6 +463,80 @@
                 <option value="5">5 Minutes</option>
                 <option value="continuous">Continuous Loop</option>
             </select>
+
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 1.5rem; padding-top: 1rem;">
+                <div class="modal-label" style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--accent-color);">Audio Volume Controls</div>
+                
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.3rem;">
+                        <span>Athan & Reminders Volume</span>
+                        <span id="volume-athan-value">80%</span>
+                    </div>
+                    <input type="range" id="volume-athan-slider" min="0" max="100" value="80" style="width: 100%; accent-color: var(--accent-color); cursor: pointer;">
+                </div>
+                
+                <div style="margin-bottom: 1.2rem;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.3rem;">
+                        <span>Quran & Media Volume</span>
+                        <span id="volume-media-value">80%</span>
+                    </div>
+                    <input type="range" id="volume-media-slider" min="0" max="100" value="80" style="width: 100%; accent-color: var(--accent-color); cursor: pointer;">
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 1.5rem; padding-top: 1rem;">
+                <div class="modal-label" style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--accent-color);">Iqamah Countdowns (Minutes Offset)</div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 1.2rem;">
+                    <div>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Fajr</span>
+                        <select id="iqamah-offset-fajr" class="modal-select" style="margin: 0; width: 100%;">
+                            <option value="5">5 mins</option>
+                            <option value="10">10 mins</option>
+                            <option value="15" selected>15 mins</option>
+                            <option value="20">20 mins</option>
+                            <option value="25">25 mins</option>
+                            <option value="30">30 mins</option>
+                        </select>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Dhuhr</span>
+                        <select id="iqamah-offset-dhuhr" class="modal-select" style="margin: 0; width: 100%;">
+                            <option value="5">5 mins</option>
+                            <option value="10" selected>10 mins</option>
+                            <option value="15">15 mins</option>
+                            <option value="20">20 mins</option>
+                        </select>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Asr</span>
+                        <select id="iqamah-offset-asr" class="modal-select" style="margin: 0; width: 100%;">
+                            <option value="5">5 mins</option>
+                            <option value="10" selected>10 mins</option>
+                            <option value="15">15 mins</option>
+                            <option value="20">20 mins</option>
+                        </select>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Maghrib</span>
+                        <select id="iqamah-offset-maghrib" class="modal-select" style="margin: 0; width: 100%;">
+                            <option value="5" selected>5 mins</option>
+                            <option value="7">7 mins</option>
+                            <option value="10">10 mins</option>
+                            <option value="15">15 mins</option>
+                        </select>
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Isha</span>
+                        <select id="iqamah-offset-isha" class="modal-select" style="margin: 0; width: 100%;">
+                            <option value="5">5 mins</option>
+                            <option value="10" selected>10 mins</option>
+                            <option value="15">15 mins</option>
+                            <option value="20">20 mins</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
 
             <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 1.5rem; padding-top: 1rem;">
                 <div class="modal-label" style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--accent-color);">Azkar Auto-Play</div>
@@ -350,6 +596,19 @@
                 </div>
                 <div id="remote-connection-status" style="font-weight: 700; color: #ef4444;">
                     🔴 Not Connected
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem; display: flex; flex-direction: column; align-items: center;">
+                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                    Scan to Connect Remote
+                </div>
+                <div id="remote-qr-container" style="background: white; padding: 12px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15); display: inline-flex; align-items: center; justify-content: center; min-width: 150px; min-height: 150px; flex-direction: column;">
+                    <img id="remote-qr-code" src="" alt="Scan to connect remote" style="width: 150px; height: 150px; display: none;" />
+                    <span id="remote-qr-loading" style="font-size: 0.9rem; color: #666; font-family: sans-serif;">Generating QR Code...</span>
+                </div>
+                <div id="remote-localhost-warning" style="display: none; font-size: 0.85rem; color: #eab308; background: rgba(234, 179, 8, 0.15); border: 1px solid rgba(234, 179, 8, 0.3); padding: 8px 12px; border-radius: 8px; margin-top: 10px; text-align: left; line-height: 1.4; max-width: 280px; font-family: sans-serif;">
+                    ⚠️ <strong>Using localhost:</strong> Your phone cannot connect to "localhost". Open this page in your computer's browser using your computer's local IP address (e.g. <code>http://192.168.X.X:8080</code>) so the QR code contains the right link.
                 </div>
             </div>
 
@@ -426,6 +685,70 @@
         <div class="fs-controls">
             <button id="fs-play-pause-btn" class="icon-btn" style="font-size: 3rem;">⏸</button>
             <div id="fs-status-text">Playing...</div>
+        </div>
+    </div>
+
+    <!-- Athan Playing Overlay (Mosque & Salah Name) -->
+    <div id="athan-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10000; background: #000; color: #fff; font-family: 'Outfit', sans-serif;">
+        <div id="athan-overlay-bg" style="position: absolute; inset: 0; background-size: cover; background-position: center; filter: brightness(0.6); transition: background-image 1s ease-in-out;"></div>
+        
+        <!-- Overlay content -->
+        <div style="position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 3rem 2rem; box-sizing: border-box; background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 40%, rgba(0,0,0,0.7) 100%);">
+            
+            <!-- Top section: Salah name -->
+            <div style="text-align: center; margin-top: 2rem;">
+                <span id="athan-overlay-title" style="font-size: 1.5rem; text-transform: uppercase; letter-spacing: 4px; opacity: 0.9; color: #fecdd3;">Now Playing</span>
+                <h1 id="athan-overlay-salah" style="font-size: clamp(3rem, 8vw, 5.5rem); font-weight: 800; margin-top: 0.5rem; letter-spacing: 2px; text-shadow: 0 4px 15px rgba(0,0,0,0.6);">Fajr Athan</h1>
+            </div>
+            
+            <!-- Center decorative element -->
+            <div style="font-size: 5rem; animation: pulse 2s infinite alternate; filter: drop-shadow(0 0 20px rgba(255,255,255,0.4));">🕌</div>
+            
+            <!-- Bottom section: Mosque Info and Stop button -->
+            <div style="width: 100%; max-width: 600px; display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
+                <div style="text-align: center; text-shadow: 0 2px 8px rgba(0,0,0,0.8);">
+                    <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; opacity: 0.7; margin-bottom: 0.2rem;">Featured Mosque</div>
+                    <div id="athan-overlay-mosque" style="font-size: 1.35rem; font-weight: 600; letter-spacing: 0.5px;">Sheikh Zayed Grand Mosque</div>
+                    <div id="athan-overlay-location" style="font-size: 0.95rem; opacity: 0.8; margin-top: 0.2rem;">Abu Dhabi, UAE</div>
+                </div>
+                
+                <button id="athan-overlay-stop-btn" class="joy-btn joy-btn-primary" style="background: rgba(239, 68, 68, 0.9); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 30px; font-size: 1.1rem; padding: 12px 35px; cursor: pointer; max-width: 200px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); backdrop-filter: blur(5px);">
+                    ⏹ Stop Athan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         QIBLA COMPASS MODAL
+         ========================================== -->
+    <div id="qibla-modal" class="modal">
+        <div class="modal-box" style="max-width: 400px; text-align: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 class="modal-title" style="margin: 0;">Qibla Direction</h2>
+                <button class="modal-close" id="close-qibla-modal">&times;</button>
+            </div>
+            
+            <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+                Based on your current coordinates, the direction to Makkah is displayed below.
+            </p>
+
+            <div style="position: relative; width: 200px; height: 200px; margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center;">
+                <!-- Compass Ring -->
+                <div class="compass-ring" style="position: absolute; inset: 0; border: 4px dashed var(--accent-color); border-radius: 50%; opacity: 0.6;"></div>
+                <!-- Compass Dial/Arrow -->
+                <div id="qibla-pointer" style="width: 100%; height: 100%; position: absolute; transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1); transform: rotate(0deg); display: flex; align-items: center; justify-content: center;">
+                    <div style="width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-bottom: 80px solid var(--accent-color); position: absolute; top: 10px;"></div>
+                    <div style="width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 80px solid rgba(255, 255, 255, 0.3); position: absolute; bottom: 10px;"></div>
+                    <!-- Small Kaaba Icon in the middle of the compass -->
+                    <div style="font-size: 2rem; position: absolute; z-index: 2;">🕋</div>
+                </div>
+            </div>
+
+            <div style="background: rgba(0,0,0,0.05); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); display: inline-block; margin-bottom: 0.5rem;">
+                <div style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 1px; margin-bottom: 0.2rem;">Qibla Angle</div>
+                <div id="qibla-angle-display" style="font-size: 1.5rem; font-weight: 800; color: var(--accent-color);">--°</div>
+            </div>
         </div>
     </div>
 

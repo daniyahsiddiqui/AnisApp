@@ -4,8 +4,8 @@
   "description": "Smart Athan Clock App",
   "main": "app.js",
   "scripts": {
-    "build": "mkdir -p www && cp index.html remote.html app.js remote.js style.css 1.mp3 www/ 2>/dev/null || cp index.html remote.html app.js remote.js style.css www/",
-    "sync": "npm run build && npx cap sync"
+    "build": "export PATH=/Users/daniyah/node-lts/bin:$PATH && mkdir -p www && cp index.html remote.html app.js remote.js style.css 1.mp3 www/ 2>/dev/null || cp index.html remote.html app.js remote.js style.css www/",
+    "sync": "export PATH=/Users/daniyah/node-lts/bin:$PATH && npm run build && npx cap sync"
   },
   "dependencies": {
     "@capacitor/core": "^6.0.0"

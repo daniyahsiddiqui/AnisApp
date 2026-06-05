@@ -15,8 +15,17 @@ let config = {
     morningAzkarTime: localStorage.getItem('morningAzkarTime') || '07:00',
     autoEveningAzkar: localStorage.getItem('autoEveningAzkar') === 'true',
     eveningAzkarMode: localStorage.getItem('eveningAzkarMode') || 'asr_offset',
-    eveningAzkarTime: localStorage.getItem('eveningAzkarTime') || '18:00'
+    eveningAzkarTime: localStorage.getItem('eveningAzkarTime') || '18:00',
+    buttonLayout: (localStorage.getItem('buttonLayout') === 'pill_dock' ? 'pill-dock' : (localStorage.getItem('buttonLayout') || 'categorized')),
+    weatherUnit: localStorage.getItem('weatherUnit') || 'fahrenheit',
+    volumeAthan: parseInt(localStorage.getItem('volumeAthan')) !== undefined && localStorage.getItem('volumeAthan') !== null ? parseInt(localStorage.getItem('volumeAthan')) : 80,
+    volumeMedia: parseInt(localStorage.getItem('volumeMedia')) !== undefined && localStorage.getItem('volumeMedia') !== null ? parseInt(localStorage.getItem('volumeMedia')) : 80,
+    iqamahOffsets: JSON.parse(localStorage.getItem('iqamahOffsets')) || { Fajr: 15, Dhuhr: 10, Asr: 10, Maghrib: 5, Isha: 10 }
 };
+
+// Iqamah countdown state
+let activeIqamahCountdown = null;
+let activeIqamahTimer = null;
 
 // State
 let prayerTimes = {};
@@ -83,6 +92,17 @@ const elements = {
     remotePeerId: document.getElementById('remote-peer-id'),
     remoteStatus: document.getElementById('remote-connection-status'),
     remoteLink: document.getElementById('remote-control-link'),
+    remoteQrCode: document.getElementById('remote-qr-code'),
+    remoteQrLoading: document.getElementById('remote-qr-loading'),
+    remoteLocalhostWarning: document.getElementById('remote-localhost-warning'),
+    
+    weatherWidget: document.getElementById('weather-widget'),
+    weatherIcon: document.getElementById('weather-icon'),
+    weatherTemp: document.getElementById('weather-temp'),
+    joyWeatherWidget: document.getElementById('joy-weather-widget'),
+    joyWeatherIcon: document.getElementById('joy-weather-icon'),
+    joyWeatherTemp: document.getElementById('joy-weather-temp'),
+    weatherUnitSelect: document.getElementById('weather-unit-select'),
     
     hadithModal: document.getElementById('hadith-modal'),
     closeHadithBtn: document.getElementById('close-hadith-modal'),
@@ -123,6 +143,38 @@ async function init() {
     }
     if (eveningAzkarTimeInput) eveningAzkarTimeInput.value = config.eveningAzkarTime;
     
+    const buttonLayoutSelect = document.getElementById('button-layout-select');
+    if (buttonLayoutSelect) buttonLayoutSelect.value = config.buttonLayout;
+    applyButtonLayoutTheme(config.buttonLayout);
+
+    if (elements.weatherUnitSelect) elements.weatherUnitSelect.value = config.weatherUnit;
+    setInterval(fetchWeather, 30 * 60 * 1000);
+    
+    // Initialize volume values
+    const athanVolSlider = document.getElementById('volume-athan-slider');
+    const athanVolVal = document.getElementById('volume-athan-value');
+    const mediaVolSlider = document.getElementById('volume-media-slider');
+    const mediaVolVal = document.getElementById('volume-media-value');
+    if (athanVolSlider && athanVolVal) {
+        athanVolSlider.value = config.volumeAthan;
+        athanVolVal.textContent = `${config.volumeAthan}%`;
+        elements.audio.volume = config.volumeAthan / 100;
+    }
+    if (mediaVolSlider && mediaVolVal) {
+        mediaVolSlider.value = config.volumeMedia;
+        mediaVolVal.textContent = `${config.volumeMedia}%`;
+        elements.quranAudio.volume = config.volumeMedia / 100;
+    }
+
+    // Initialize Iqamah offsets dropdown values
+    ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'].forEach(p => {
+        const select = document.getElementById(`iqamah-offset-${p}`);
+        if (select) {
+            const key = p.charAt(0).toUpperCase() + p.slice(1);
+            select.value = config.iqamahOffsets[key] || (key === 'Fajr' ? 15 : (key === 'Maghrib' ? 5 : 10));
+        }
+    });
+
     setupEventListeners();
     setupVoiceRecognition();
     
@@ -130,12 +182,19 @@ async function init() {
     updateClock();
     setInterval(updateClock, 1000);
     
+    // Display Daily Reminder Board content on card
+    updateDailyRemindersCard();
+
+    // Check banners
+    checkFridayReminders();
+    
     // Do location detection and timing fetch asynchronously without blocking UI or PeerJS registration
     detectLocation()
         .then(() => fetchPrayerTimes())
         .catch(err => console.error("Initial location/time load failed:", err))
         .finally(() => {
             fetchSurahsList();
+            checkHolidayCountdown();
         });
     
     // Refresh prayer times from API every 12 hours
@@ -149,7 +208,7 @@ function setupEventListeners() {
     UI.on('.settings-btn', 'click', () => elements.settingsModal.classList.add('open'));
     UI.on('#close-settings', 'click', () => elements.settingsModal.classList.remove('open'));
     
-    UI.on('.open-quran-btn', 'click', () => elements.quranModal.classList.add('open'));
+    UI.on('.quran-trigger-btn', 'click', () => elements.quranModal.classList.add('open'));
     UI.on('#close-quran', 'click', () => elements.quranModal.classList.remove('open'));
 
     UI.on('.remote-btn', 'click', () => {
@@ -168,8 +227,7 @@ function setupEventListeners() {
             playAzkar('morning');
         }
     };
-    UI.on('#morning-azkar-btn', 'click', handleMorningAzkarClick);
-    UI.on('#joyful-morning-azkar-btn', 'click', handleMorningAzkarClick);
+    UI.on('.azkar-morning-trigger-btn', 'click', handleMorningAzkarClick);
 
     const handleEveningAzkarClick = () => {
         if (currentAthanAudioType === 'evening_azkar') {
@@ -178,8 +236,7 @@ function setupEventListeners() {
             playAzkar('evening');
         }
     };
-    UI.on('#evening-azkar-btn', 'click', handleEveningAzkarClick);
-    UI.on('#joyful-evening-azkar-btn', 'click', handleEveningAzkarClick);
+    UI.on('.azkar-evening-trigger-btn', 'click', handleEveningAzkarClick);
 
     // Azkar Setting change listeners
     const autoMorningAzkarCheckbox = document.getElementById('auto-morning-azkar');
@@ -239,8 +296,7 @@ function setupEventListeners() {
             playTakbeerat();
         }
     };
-    UI.on('#takbeerat-btn', 'click', handleTakbeeratClick);
-    UI.on('#joyful-takbeerat-btn', 'click', handleTakbeeratClick);
+    UI.on('.takbeerat-trigger-btn', 'click', handleTakbeeratClick);
 
     const takbeeratDurationSelect = document.getElementById('takbeerat-duration-select');
     if (takbeeratDurationSelect) {
@@ -251,7 +307,7 @@ function setupEventListeners() {
     }
 
     // Hadith Logic
-    UI.on('.open-hadith-btn', 'click', () => {
+    UI.on('.hadith-trigger-btn', 'click', () => {
         elements.hadithModal.classList.add('open');
         fetchDailyHadith();
     });
@@ -262,11 +318,73 @@ function setupEventListeners() {
         });
     }
 
+    // Qibla Modal Triggers
+    UI.on('.qibla-btn', 'click', () => {
+        const modal = document.getElementById('qibla-modal');
+        if (modal) {
+            modal.classList.add('open');
+            updateQiblaCompass();
+        }
+    });
+    
+    const closeQiblaBtn = document.getElementById('close-qibla-modal');
+    if (closeQiblaBtn) {
+        closeQiblaBtn.addEventListener('click', () => {
+            const modal = document.getElementById('qibla-modal');
+            if (modal) modal.classList.remove('open');
+        });
+    }
+
+    // Audio Volume Sliders listeners
+    const athanVolSlider = document.getElementById('volume-athan-slider');
+    const athanVolVal = document.getElementById('volume-athan-value');
+    if (athanVolSlider && athanVolVal) {
+        athanVolSlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            config.volumeAthan = parseInt(val);
+            localStorage.setItem('volumeAthan', config.volumeAthan);
+            athanVolVal.textContent = `${val}%`;
+            elements.audio.volume = val / 100;
+        });
+    }
+
+    const mediaVolSlider = document.getElementById('volume-media-slider');
+    const mediaVolVal = document.getElementById('volume-media-value');
+    if (mediaVolSlider && mediaVolVal) {
+        mediaVolSlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            config.volumeMedia = parseInt(val);
+            localStorage.setItem('volumeMedia', config.volumeMedia);
+            mediaVolVal.textContent = `${val}%`;
+            elements.quranAudio.volume = val / 100;
+        });
+    }
+
+    // Iqamah offsets listeners
+    ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'].forEach(p => {
+        const select = document.getElementById(`iqamah-offset-${p}`);
+        if (select) {
+            select.addEventListener('change', (e) => {
+                const key = p.charAt(0).toUpperCase() + p.slice(1);
+                config.iqamahOffsets[key] = parseInt(e.target.value);
+                localStorage.setItem('iqamahOffsets', JSON.stringify(config.iqamahOffsets));
+            });
+        }
+    });
+
     elements.themeSwatches.forEach(swatch => {
-        swatch.addEventListener('click', (e) => {
-            applyTheme(e.target.dataset.theme);
+        swatch.addEventListener('click', () => {
+            applyTheme(swatch.dataset.theme);
         });
     });
+
+    const buttonLayoutSelect = document.getElementById('button-layout-select');
+    if (buttonLayoutSelect) {
+        buttonLayoutSelect.addEventListener('change', (e) => {
+            applyButtonLayoutTheme(e.target.value);
+            publishSpeakerStatus('idle', `Layout theme changed to ${e.target.value}`);
+        });
+    }
 
     elements.athanSelect.addEventListener('change', (e) => {
         config.athanReciter = e.target.value;
@@ -286,6 +404,14 @@ function setupEventListeners() {
             config.school = parseInt(e.target.value);
             localStorage.setItem('athanSchool', config.school);
             fetchPrayerTimes();
+        });
+    }
+
+    if (elements.weatherUnitSelect) {
+        elements.weatherUnitSelect.addEventListener('change', (e) => {
+            config.weatherUnit = e.target.value;
+            localStorage.setItem('weatherUnit', config.weatherUnit);
+            fetchWeather();
         });
     }
 
@@ -309,13 +435,21 @@ function setupEventListeners() {
                 currentAthanAudioType = 'dua';
                 elements.audio.src = 'https://archive.org/download/adhan.notifications/Dua_after_Adhan.mp3';
                 publishSpeakerStatus('playing_athan', 'Playing Dua after Adhan...');
+                
+                const overlayTitle = document.getElementById('athan-overlay-title');
+                if (overlayTitle) overlayTitle.textContent = "Dua after Athan";
+
                 try {
                     const playPromise = elements.audio.play();
                     if (playPromise !== undefined && typeof playPromise.catch === 'function') {
-                        playPromise.catch(e => console.error("Dua play blocked by browser", e));
+                        playPromise.catch(e => {
+                            console.error("Dua play blocked by browser", e);
+                            hideAthanOverlay();
+                        });
                     }
                 } catch (e) {
                     console.error("Dua play blocked by browser", e);
+                    hideAthanOverlay();
                 }
             } else if (currentAthanAudioType === 'takbeerat') {
                 stopTakbeerat();
@@ -327,6 +461,7 @@ function setupEventListeners() {
                 publishSpeakerStatus('idle', 'Speaker is Idle');
                 updateTakbeeratButtonUI();
                 updateAzkarButtonUI();
+                hideAthanOverlay();
             }
         });
     }
@@ -372,7 +507,7 @@ function setupEventListeners() {
     elements.quranStop.addEventListener('click', () => stopQuran());
     elements.quranAudio.addEventListener('ended', playNextInQueue);
     
-    UI.on('.voice-cmd-btn', 'click', toggleVoiceRecognition);
+    UI.on('.voice-trigger-btn', 'click', toggleVoiceRecognition);
 
     // Full Screen Controls
     elements.fsPlayPauseBtn.addEventListener('click', () => {
@@ -433,6 +568,26 @@ function setupEventListeners() {
             publishSpeakerStatus('idle', 'Speaker is Idle');
         }
     });
+
+    // Stop button on Athan Overlay
+    const overlayStopBtn = document.getElementById('athan-overlay-stop-btn');
+    if (overlayStopBtn) {
+        overlayStopBtn.addEventListener('click', () => {
+            elements.audio.pause();
+            elements.audio.currentTime = 0;
+            currentAthanAudioType = 'none';
+            if (elements.testAthanBtn) elements.testAthanBtn.innerHTML = '🔊 Test';
+            publishSpeakerStatus('idle', 'Speaker is Idle');
+            hideAthanOverlay();
+        });
+    }
+
+    // Automatically hide overlay if audio is paused/stopped
+    elements.audio.addEventListener('pause', () => {
+        if (currentAthanAudioType === 'athan' || currentAthanAudioType === 'dua' || currentAthanAudioType === 'none') {
+            hideAthanOverlay();
+        }
+    });
 }
 
 function updateMuteUI() {
@@ -444,7 +599,7 @@ function updateMuteUI() {
 function setupVoiceRecognition() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-        document.querySelectorAll('.voice-cmd-btn').forEach(btn => btn.style.display = 'none');
+        document.querySelectorAll('.voice-trigger-btn').forEach(btn => btn.style.display = 'none');
         return;
     }
     
@@ -455,7 +610,7 @@ function setupVoiceRecognition() {
 
     recognition.onstart = function() {
         isListening = true;
-        UI.addClass('.voice-cmd-btn', 'listening');
+        UI.addClass('.voice-trigger-btn', 'listening');
         UI.setText('.voice-status', "Listening...");
         publishSpeakerStatus('listening', 'Listening for voice command...');
     };
@@ -490,7 +645,7 @@ function toggleVoiceRecognition() {
 
 function stopListening() {
     isListening = false;
-    UI.removeClass('.voice-cmd-btn', 'listening');
+    UI.removeClass('.voice-trigger-btn', 'listening');
     if(recognition) recognition.stop();
     if (currentSpeakerState === 'listening') {
         publishSpeakerStatus('idle', 'Speaker is Idle');
@@ -560,7 +715,14 @@ async function handleVoiceCommand(cmd) {
 
 // --- App Logic ---
 function applyTheme(themeName) {
-    document.body.className = ''; 
+    const classesToRemove = [];
+    document.body.classList.forEach(cls => {
+        if (cls.startsWith('theme-')) {
+            classesToRemove.push(cls);
+        }
+    });
+    classesToRemove.forEach(cls => document.body.classList.remove(cls));
+    
     document.body.classList.add(`theme-${themeName}`);
     
     elements.themeSwatches.forEach(swatch => swatch.classList.remove('active'));
@@ -569,6 +731,38 @@ function applyTheme(themeName) {
     
     config.theme = themeName;
     localStorage.setItem('theme', themeName);
+}
+
+function applyButtonLayoutTheme(layoutName) {
+    const classesToRemove = [];
+    document.body.classList.forEach(cls => {
+        if (cls.startsWith('layout-')) {
+            classesToRemove.push(cls);
+        }
+    });
+    classesToRemove.forEach(cls => document.body.classList.remove(cls));
+    
+    document.body.classList.add(`layout-${layoutName}`);
+    
+    config.buttonLayout = layoutName;
+    localStorage.setItem('buttonLayout', layoutName);
+    
+    const buttonLayoutSelect = document.getElementById('button-layout-select');
+    if (buttonLayoutSelect) buttonLayoutSelect.value = layoutName;
+}
+
+function toggleTakbeeratButtons(show) {
+    const displayValue = show ? 'flex' : 'none';
+    const selectors = [
+        '.takbeerat-card-container',
+        '.takbeerat-pill-container',
+        '.takbeerat-bubble-container'
+    ];
+    selectors.forEach(selector => {
+        document.querySelectorAll(selector).forEach(el => {
+            el.style.display = displayValue;
+        });
+    });
 }
 
 // --- Daily Hadith Logic ---
@@ -615,27 +809,30 @@ let takbeeratTimeout = null;
 
 function updateTakbeeratButtonUI() {
     const isPlaying = (currentAthanAudioType === 'takbeerat');
-    const btn = document.getElementById('takbeerat-btn');
-    const joyfulBtn = document.getElementById('joyful-takbeerat-btn');
     
-    if (btn) {
+    document.querySelectorAll('.takbeerat-trigger-btn').forEach(btn => {
+        if (btn.classList.contains('pill-btn')) {
+            if (isPlaying) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+            return;
+        }
+        
         if (isPlaying) {
             btn.innerHTML = '⏹ Stop Takbeerat';
             btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
         } else {
-            btn.innerHTML = '🕋 Play Takbeerat';
-            btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+            if (btn.classList.contains('bubble-btn') || btn.querySelector('.bubble-text')) {
+                btn.innerHTML = '<span class="bubble-icon">🕋</span><span class="bubble-text">Takbeerat</span>';
+                btn.style.background = '';
+            } else {
+                btn.innerHTML = '🕋 Play Takbeerat';
+                btn.style.background = '';
+            }
         }
-    }
-    if (joyfulBtn) {
-        if (isPlaying) {
-            joyfulBtn.innerHTML = '⏹ Stop Takbeerat';
-            joyfulBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
-        } else {
-            joyfulBtn.innerHTML = '🕋 Play Takbeerat';
-            joyfulBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-        }
-    }
+    });
 }
 
 function playTakbeerat() {
@@ -763,48 +960,55 @@ function updateAzkarButtonUI() {
     const isMorningPlaying = (currentAthanAudioType === 'morning_azkar');
     const isEveningPlaying = (currentAthanAudioType === 'evening_azkar');
     
-    const morningBtn = document.getElementById('morning-azkar-btn');
-    const joyfulMorningBtn = document.getElementById('joyful-morning-azkar-btn');
-    const eveningBtn = document.getElementById('evening-azkar-btn');
-    const joyfulEveningBtn = document.getElementById('joyful-evening-azkar-btn');
-    
-    if (morningBtn) {
+    // 1. Morning Azkar buttons
+    document.querySelectorAll('.azkar-morning-trigger-btn').forEach(btn => {
+        if (btn.classList.contains('pill-btn')) {
+            if (isMorningPlaying) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+            return;
+        }
+        
         if (isMorningPlaying) {
-            morningBtn.innerHTML = '⏹ Stop Azkar';
-            morningBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+            btn.innerHTML = '⏹ Stop Azkar';
+            btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
         } else {
-            morningBtn.innerHTML = '☀️ Morning Azkar';
-            morningBtn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+            if (btn.classList.contains('bubble-btn') || btn.querySelector('.bubble-text')) {
+                btn.innerHTML = '<span class="bubble-icon">☀️</span><span class="bubble-text">Morning</span>';
+                btn.style.background = '';
+            } else {
+                btn.innerHTML = '☀️ Morning';
+                btn.style.background = '';
+            }
         }
-    }
-    if (joyfulMorningBtn) {
-        if (isMorningPlaying) {
-            joyfulMorningBtn.innerHTML = '⏹ Stop Azkar';
-            joyfulMorningBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
-        } else {
-            joyfulMorningBtn.innerHTML = '☀️ Morning Azkar';
-            joyfulMorningBtn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
-        }
-    }
+    });
     
-    if (eveningBtn) {
-        if (isEveningPlaying) {
-            eveningBtn.innerHTML = '⏹ Stop Azkar';
-            eveningBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
-        } else {
-            eveningBtn.innerHTML = '🌙 Evening Azkar';
-            eveningBtn.style.background = 'linear-gradient(135deg, #6366f1, #4f46e5)';
+    // 2. Evening Azkar buttons
+    document.querySelectorAll('.azkar-evening-trigger-btn').forEach(btn => {
+        if (btn.classList.contains('pill-btn')) {
+            if (isEveningPlaying) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+            return;
         }
-    }
-    if (joyfulEveningBtn) {
+        
         if (isEveningPlaying) {
-            joyfulEveningBtn.innerHTML = '⏹ Stop Azkar';
-            joyfulEveningBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+            btn.innerHTML = '⏹ Stop Azkar';
+            btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
         } else {
-            joyfulEveningBtn.innerHTML = '🌙 Evening Azkar';
-            joyfulEveningBtn.style.background = 'linear-gradient(135deg, #6366f1, #4f46e5)';
+            if (btn.classList.contains('bubble-btn') || btn.querySelector('.bubble-text')) {
+                btn.innerHTML = '<span class="bubble-icon">🌙</span><span class="bubble-text">Evening</span>';
+                btn.style.background = '';
+            } else {
+                btn.innerHTML = '🌙 Evening';
+                btn.style.background = '';
+            }
         }
-    }
+    });
 }
 
 function getEveningAzkarTime() {
@@ -948,6 +1152,9 @@ function updateClock() {
     UI.setText('.current-seconds', seconds);
     UI.setText('.am-pm', ampm);
 
+    // Check sleep/dim mode status
+    checkSleepMode();
+
     // Dynamic Azkar check (check once a minute when seconds === '00')
     if (seconds === '00') {
         const hh = String(now.getHours()).padStart(2, '0');
@@ -974,15 +1181,69 @@ async function fetchPrayerTimes() {
         if (data.code === 200) {
             prayerTimes = data.data.timings;
             hijriDateInfo = data.data.date.hijri;
+            
+            if (data.data.meta) {
+                config.lat = data.data.meta.latitude;
+                config.lng = data.data.meta.longitude;
+            }
+            
             UI.setText('.gregorian-date', data.data.date.readable);
             UI.setText('.hijri-date', `${data.data.date.hijri.day} ${data.data.date.hijri.month.en} ${data.data.date.hijri.year}`);
             updatePrayerTimesUI();
             calculateNextPrayer();
             checkAndToggleTakbeeratButton();
+            fetchWeather(); // Fetch weather whenever prayer times/location is loaded
         }
     } catch (error) {
         console.error("Failed to fetch prayer times", error);
         UI.setText('.location-text', "Error loading data");
+    }
+}
+
+function getWeatherEmoji(code) {
+    if (code === 0) return '☀️';
+    if (code >= 1 && code <= 3) return '🌤️';
+    if (code === 45 || code === 48) return '🌫️';
+    if (code >= 51 && code <= 55) return '🌧️';
+    if (code >= 61 && code <= 65) return '🌧️';
+    if (code >= 71 && code <= 77) return '❄️';
+    if (code >= 80 && code <= 82) return '🌦️';
+    if (code >= 95 && code <= 99) return '⛈️';
+    return '☀️';
+}
+
+async function fetchWeather() {
+    if (!config.lat || !config.lng) return;
+    
+    try {
+        const unitParam = config.weatherUnit === 'fahrenheit' ? 'fahrenheit' : 'celsius';
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${config.lat}&longitude=${config.lng}&current_weather=true&temperature_unit=${unitParam}`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data && data.current_weather) {
+            const temp = Math.round(data.current_weather.temperature);
+            const code = data.current_weather.weathercode;
+            const emoji = getWeatherEmoji(code);
+            const unitLabel = config.weatherUnit === 'fahrenheit' ? '°F' : '°C';
+            
+            // Update classic widget
+            if (elements.weatherWidget) {
+                if (elements.weatherTemp) elements.weatherTemp.textContent = `${temp}${unitLabel}`;
+                if (elements.weatherIcon) elements.weatherIcon.textContent = emoji;
+                elements.weatherWidget.style.display = 'flex';
+            }
+            
+            // Update joyful widget
+            if (elements.joyWeatherWidget) {
+                if (elements.joyWeatherTemp) elements.joyWeatherTemp.textContent = `${temp}${unitLabel}`;
+                if (elements.joyWeatherIcon) elements.joyWeatherIcon.textContent = emoji;
+                elements.joyWeatherWidget.style.display = 'flex';
+            }
+        }
+    } catch (e) {
+        console.error("Failed to fetch weather:", e);
     }
 }
 
@@ -1077,6 +1338,43 @@ const fajrAdhanUrls = {
     'al-qatami': 'https://raw.githubusercontent.com/abodehq/Athan-MP3/master/Sounds/Athan%20Al-fajer%20-%20Malek%20chebae.mp3'
 };
 
+const mosques = [
+    { name: "Sheikh Zayed Grand Mosque", location: "Abu Dhabi, UAE", url: "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?q=80&w=1200&auto=format&fit=crop" },
+    { name: "Sultan Ahmed Mosque (Blue Mosque)", location: "Istanbul, Turkey", url: "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?q=80&w=1200&auto=format&fit=crop" },
+    { name: "Al-Haram Mosque", location: "Makkah, Saudi Arabia", url: "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?q=80&w=1200&auto=format&fit=crop" },
+    { name: "Al-Masjid an-Nabawi", location: "Medina, Saudi Arabia", url: "https://images.unsplash.com/photo-1601058440526-3d233abbe31e?q=80&w=1200&auto=format&fit=crop" },
+    { name: "Putra Mosque", location: "Putrajaya, Malaysia", url: "https://images.unsplash.com/photo-1566121933170-c750b38c2627?q=80&w=1200&auto=format&fit=crop" },
+    { name: "Faisal Mosque", location: "Islamabad, Pakistan", url: "https://images.unsplash.com/photo-1627817603175-104928b58474?q=80&w=1200&auto=format&fit=crop" },
+    { name: "Hassan II Mosque", location: "Casablanca, Morocco", url: "https://images.unsplash.com/photo-1533468551403-1250269de878?q=80&w=1200&auto=format&fit=crop" }
+];
+
+function showAthanOverlay(salahName) {
+    const overlay = document.getElementById('athan-overlay');
+    const overlayBg = document.getElementById('athan-overlay-bg');
+    const overlaySalah = document.getElementById('athan-overlay-salah');
+    const overlayMosque = document.getElementById('athan-overlay-mosque');
+    const overlayLocation = document.getElementById('athan-overlay-location');
+    const overlayTitle = document.getElementById('athan-overlay-title');
+
+    if (!overlay || !overlayBg) return;
+
+    // Pick random mosque
+    const mosque = mosques[Math.floor(Math.random() * mosques.length)];
+    
+    overlayBg.style.backgroundImage = `url('${mosque.url}')`;
+    overlaySalah.textContent = `${salahName} Athan`;
+    overlayMosque.textContent = mosque.name;
+    overlayLocation.textContent = mosque.location;
+    if (overlayTitle) overlayTitle.textContent = "Now Playing";
+
+    overlay.style.display = 'block';
+}
+
+function hideAthanOverlay() {
+    const overlay = document.getElementById('athan-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
 function triggerAthan(prayerName) {
     if (prayerName !== 'Sunrise') {
         if (!config.isMuted || prayerName === 'Test') {
@@ -1089,6 +1387,18 @@ function triggerAthan(prayerName) {
             elements.audio.src = url;
             currentAthanAudioType = 'athan';
             publishSpeakerStatus('playing_athan', `Playing ${prayerName === 'Test' ? 'Test' : prayerName} Athan...`);
+            
+            showAthanOverlay(prayerName === 'Test' ? 'Test' : prayerName);
+            
+            // Set up a listener for Athan audio ended to trigger the Iqamah countdown
+            const playIqamahOnEnd = () => {
+                elements.audio.removeEventListener('ended', playIqamahOnEnd);
+                if (prayerName !== 'Test') {
+                    startIqamahCountdown(prayerName);
+                }
+            };
+            elements.audio.addEventListener('ended', playIqamahOnEnd);
+
             try {
                 const playPromise = elements.audio.play();
                 if (playPromise !== undefined && typeof playPromise.catch === 'function') {
@@ -1102,6 +1412,54 @@ function triggerAthan(prayerName) {
                 publishSpeakerStatus('error', 'Autoplay blocked. Tap speaker screen.');
             }
         }
+    }
+}
+
+// --- Iqamah Countdown & Chime Reminders ---
+function startIqamahCountdown(prayerName) {
+    if (activeIqamahTimer) clearInterval(activeIqamahTimer);
+    
+    const offsetMinutes = config.iqamahOffsets[prayerName] || 10;
+    let secondsRemaining = offsetMinutes * 60;
+    
+    // Create or update a DOM element to display the Iqamah countdown
+    let iqamahDisplay = document.getElementById('iqamah-countdown-display');
+    if (!iqamahDisplay) {
+        iqamahDisplay = document.createElement('div');
+        iqamahDisplay.id = 'iqamah-countdown-display';
+        iqamahDisplay.style.cssText = "background: rgba(16, 185, 129, 0.15); border: 2.5px solid #10b981; border-radius: 12px; padding: 12px; margin: 1rem auto 0; text-align: center; max-width: 400px; color: var(--text-primary); font-weight: 700; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); animation: pulse 2s infinite alternate;";
+        
+        // Insert into classic/joyful main layouts dynamically
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) mainContent.appendChild(iqamahDisplay);
+    }
+    iqamahDisplay.style.display = 'block';
+
+    activeIqamahTimer = setInterval(() => {
+        if (secondsRemaining <= 0) {
+            clearInterval(activeIqamahTimer);
+            iqamahDisplay.innerHTML = `<div>🕌 Iqamah time for ${prayerName}!</div>`;
+            playIqamahChime();
+            setTimeout(() => { iqamahDisplay.style.display = 'none'; }, 8000);
+            return;
+        }
+        
+        const m = Math.floor(secondsRemaining / 60);
+        const s = secondsRemaining % 60;
+        iqamahDisplay.innerHTML = `<div>🕌 Iqamah for ${prayerName} in <span style="color: #10b981;">${m}:${String(s).padStart(2, '0')}</span></div>`;
+        secondsRemaining--;
+    }, 1000);
+}
+
+function playIqamahChime() {
+    // Play a short sweet chime to remind user that Iqamah is finishing
+    // We can use a standard notification chime audio file link
+    elements.audio.src = 'https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg';
+    currentAthanAudioType = 'dua'; // Temporary type to not trigger loop
+    try {
+        elements.audio.play();
+    } catch (e) {
+        console.error("Failed to play Iqamah chime:", e);
     }
 }
 
@@ -1387,13 +1745,26 @@ function publishSpeakerStatus(speakerState, detail) {
             morningAzkarTime: config.morningAzkarTime,
             autoEveningAzkar: config.autoEveningAzkar,
             eveningAzkarMode: config.eveningAzkarMode,
-            eveningAzkarTime: config.eveningAzkarTime
+            eveningAzkarTime: config.eveningAzkarTime,
+            buttonLayout: config.buttonLayout
         }));
     }
 }
 
 function initPeerServer() {
     if (mqttClient) return; // Already initialized
+
+    // Reset QR code UI
+    if (elements.remoteQrCode) {
+        elements.remoteQrCode.style.display = 'none';
+        elements.remoteQrCode.src = '';
+    }
+    if (elements.remoteQrLoading) {
+        elements.remoteQrLoading.style.display = 'inline-block';
+    }
+    if (elements.remoteLocalhostWarning) {
+        elements.remoteLocalhostWarning.style.display = 'none';
+    }
 
     // Generate a simple 5-digit number to make it easy to type on mobile
     const randCode = Math.floor(10000 + Math.random() * 90000);
@@ -1421,6 +1792,19 @@ function initPeerServer() {
         
         if (elements.remoteLink) {
             elements.remoteLink.href = remoteUrl;
+        }
+
+        if (elements.remoteQrCode) {
+            elements.remoteQrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(remoteUrl)}`;
+            elements.remoteQrCode.onload = () => {
+                if (elements.remoteQrLoading) elements.remoteQrLoading.style.display = 'none';
+                elements.remoteQrCode.style.display = 'block';
+            };
+        }
+
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (isLocalhost && elements.remoteLocalhostWarning) {
+            elements.remoteLocalhostWarning.style.display = 'block';
         }
 
         // Subscribe to commands and ping topics
@@ -1634,8 +2018,14 @@ function handleRemoteCommand(data) {
             }
             break;
             
+        case 'change_button_layout':
+            if (data.layout) {
+                applyButtonLayoutTheme(data.layout);
+            }
+            break;
+            
         case 'trigger_voice':
-            const micBtn = document.querySelector('.voice-cmd-btn');
+            const micBtn = document.querySelector('.voice-trigger-btn');
             if (micBtn) {
                 micBtn.click();
             }
@@ -1687,6 +2077,178 @@ document.addEventListener('visibilitychange', async () => {
         await requestWakeLock();
     }
 });
+
+// --- Qibla Compass Angle Calculation ---
+function updateQiblaCompass() {
+    const userLat = config.lat;
+    const userLng = config.lng;
+    
+    // Kaaba coordinates
+    const kaabaLat = 21.4225;
+    const kaabaLng = 39.8262;
+
+    const lat1 = userLat * Math.PI / 180;
+    const lat2 = kaabaLat * Math.PI / 180;
+    const lon1 = userLng * Math.PI / 180;
+    const lon2 = kaabaLng * Math.PI / 180;
+
+    const dLon = lon2 - lon1;
+
+    const y = Math.sin(dLon) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+
+    let bearing = Math.atan2(y, x) * 180 / Math.PI;
+    bearing = (bearing + 360) % 360;
+
+    const roundedAngle = Math.round(bearing);
+    
+    // Update pointer rotation and display text
+    const pointer = document.getElementById('qibla-pointer');
+    const display = document.getElementById('qibla-angle-display');
+    if (pointer) pointer.style.transform = `rotate(${roundedAngle}deg)`;
+    if (display) display.textContent = `${roundedAngle}°`;
+}
+
+// --- Friday Kahf Banner Logic ---
+function checkFridayReminders() {
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 5 is Friday
+    const classicBanner = document.getElementById('friday-kahf-banner');
+    const joyfulBanner = document.getElementById('joy-friday-kahf-banner');
+    
+    if (dayOfWeek === 5) {
+        if (classicBanner) classicBanner.style.display = 'flex';
+        if (joyfulBanner) joyfulBanner.style.display = 'flex';
+    } else {
+        if (classicBanner) classicBanner.style.display = 'none';
+        if (joyfulBanner) joyfulBanner.style.display = 'none';
+    }
+}
+
+// --- Islamic Holidays Countdown Logic ---
+function checkHolidayCountdown() {
+    // Basic Hijri to Gregorian estimate approximations for Ramadan and Eids
+    // Note: Since Aladhan API returns Hijri calendar date, we compute next occurrences dynamically
+    if (!hijriDateInfo) return;
+    
+    const hYear = parseInt(hijriDateInfo.year);
+    
+    // Define estimated holiday dates for current Hijri Year
+    // Ramadan start is 1st Ramadan, Eid Fitr is 1st Shawwal, Eid Adha is 10th Dhu al-Hijjah
+    // Let's call Aladhan API calendar utility or approximate based on standard shift of -11 days/year.
+    // However, since we can't query future APIs reliably without heavy requests, we calculate using a static known point
+    // or fetch from an API. Let's use simple estimate matching the current Hijri date:
+    // Standard approach: if current month is Sha'ban, Ramadan is next.
+    // If month is Ramadan, Eid-ul-Fitr is next.
+    // Let's compute days remaining:
+    const monthNo = parseInt(hijriDateInfo.month.number);
+    const dayNo = parseInt(hijriDateInfo.day);
+    
+    let holidayName = "";
+    let daysLeft = 999;
+    
+    // Approximate length of Hijri month = 29.5 days
+    // Ramadan (Month 9), Shawwal (Month 10 - Eid al-Fitr), Dhu al-Hijjah (Month 12 - Eid al-Adha)
+    if (monthNo === 8) { // Sha'ban
+        holidayName = "Ramadan";
+        daysLeft = (29 - dayNo) + 1; 
+    } else if (monthNo === 9) { // Ramadan
+        holidayName = "Eid al-Fitr";
+        daysLeft = (30 - dayNo) + 1;
+    } else if (monthNo === 11) { // Dhu al-Qi'dah
+        holidayName = "Eid al-Adha";
+        daysLeft = (30 - dayNo) + 10;
+    } else if (monthNo === 12 && dayNo < 10) { // Dhu al-Hijjah before 10th
+        holidayName = "Eid al-Adha";
+        daysLeft = 10 - dayNo;
+    }
+    
+    const classicBanner = document.getElementById('holiday-banner');
+    const classicText = document.getElementById('holiday-banner-text');
+    const joyfulBanner = document.getElementById('joy-holiday-banner');
+    const joyfulText = document.getElementById('joy-holiday-banner-text');
+
+    if (daysLeft <= 30 && holidayName) {
+        const text = `${holidayName} is in ${daysLeft} ${daysLeft === 1 ? 'day' : 'days'}!`;
+        if (classicBanner && classicText) {
+            classicText.textContent = text;
+            classicBanner.style.display = 'flex';
+        }
+        if (joyfulBanner && joyfulText) {
+            joyfulText.textContent = text;
+            joyfulBanner.style.display = 'flex';
+        }
+    } else {
+        if (classicBanner) classicBanner.style.display = 'none';
+        if (joyfulBanner) joyfulBanner.style.display = 'none';
+    }
+}
+
+// --- Daily Reminder Board content fetcher ---
+function updateDailyRemindersCard() {
+    const today = new Date().toISOString().split('T')[0];
+    const cachedDate = localStorage.getItem('hadithDate');
+    const cachedHadith = localStorage.getItem('hadithText');
+    const cachedRef = localStorage.getItem('hadithRef');
+
+    const updateUI = (text, ref) => {
+        const boardText = document.getElementById('reminder-board-text');
+        const boardRef = document.getElementById('reminder-board-ref');
+        const joyBoardText = document.getElementById('joy-reminder-board-text');
+        const joyBoardRef = document.getElementById('joy-reminder-board-ref');
+
+        if (boardText) boardText.textContent = text;
+        if (boardRef) boardRef.textContent = ref;
+        if (joyBoardText) joyBoardText.textContent = text;
+        if (joyBoardRef) joyBoardRef.textContent = ref;
+    };
+
+    if (cachedDate === today && cachedHadith) {
+        updateUI(`"${cachedHadith}"`, cachedRef);
+        return;
+    }
+
+    // Default placeholder
+    updateUI('"Actions are judged by intentions..."', "Sahih al-Bukhari");
+
+    // Fetch asynchronously
+    fetchDailyHadith().then(() => {
+        const freshHadith = localStorage.getItem('hadithText');
+        const freshRef = localStorage.getItem('hadithRef');
+        if (freshHadith) {
+            updateUI(`"${freshHadith}"`, freshRef);
+        }
+    }).catch(err => console.error("Async daily reminder board load failed:", err));
+}
+
+// --- Sleep / Night Mode Check (Isha to Fajr) ---
+function checkSleepMode() {
+    if (!prayerTimes.Isha || !prayerTimes.Fajr) return;
+
+    const now = new Date();
+    const [ishaH, ishaM] = prayerTimes.Isha.split(':').map(Number);
+    const [fajrH, fajrM] = prayerTimes.Fajr.split(':').map(Number);
+
+    const ishaDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), ishaH, ishaM, 0);
+    const fajrDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), fajrH, fajrM, 0);
+    
+    let isSleepTime = false;
+
+    // Sleep mode active if:
+    // 1) Time is past Isha tonight
+    // 2) Time is before Fajr in the morning
+    if (now >= ishaDate) {
+        isSleepTime = true;
+    } else if (now < fajrDate) {
+        isSleepTime = true;
+    }
+
+    if (isSleepTime) {
+        document.body.classList.add('sleep-mode-active');
+    } else {
+        document.body.classList.remove('sleep-mode-active');
+    }
+}
 
 // Start app
 init();

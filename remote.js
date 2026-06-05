@@ -24,6 +24,7 @@ const elements = {
     schoolSelect: document.getElementById('remote-school-select'),
     voiceBtns: document.querySelectorAll('.remote-voice-btn'),
     swatches: document.querySelectorAll('.swatch'),
+    layoutSelect: document.getElementById('remote-layout-select'),
     
     // Quran Player settings selectors
     reciterSelect: document.getElementById('remote-reciter-select'),
@@ -208,6 +209,9 @@ function connectToSpeaker() {
                 }
                 if (payload.eveningAzkarTime && elements.eveningAzkarTimeInput) {
                     elements.eveningAzkarTimeInput.value = payload.eveningAzkarTime;
+                }
+                if (payload.buttonLayout && elements.layoutSelect) {
+                    elements.layoutSelect.value = payload.buttonLayout;
                 }
             } else {
                 updateStatus("Connecting to Speaker...", "orange");
@@ -453,4 +457,8 @@ function setupRemoteControlActions() {
             sendCommand({ action: 'change_theme', theme: e.target.dataset.theme });
         };
     });
+
+    if (elements.layoutSelect) {
+        elements.layoutSelect.onchange = (e) => sendCommand({ action: 'change_button_layout', layout: e.target.value });
+    }
 }
