@@ -1356,7 +1356,7 @@ const fajrAdhanUrls = {
 const mosques = [
     { name: "Sheikh Zayed Grand Mosque", location: "Abu Dhabi, UAE", url: "images/sheikh_zayed.jpg" },
     { name: "Sultan Ahmed Mosque (Blue Mosque)", location: "Istanbul, Turkey", url: "images/blue_mosque.jpg" },
-    { name: "Al-Haram Mosque", location: "Makkah, Saudi Arabia", url: "images/al_haram.jpg" },
+    { name: "Al-Haram Mosque", location: "Makkah, Saudi Arabia", url: "images/al_haram.png" },
     { name: "Al-Masjid an-Nabawi", location: "Medina, Saudi Arabia", url: "images/nabawi.png" },
     { name: "Putra Mosque", location: "Putrajaya, Malaysia", url: "images/putra.png" },
     { name: "Faisal Mosque", location: "Islamabad, Pakistan", url: "images/faisal.png" },
