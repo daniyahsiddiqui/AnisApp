@@ -2237,13 +2237,14 @@ function checkSleepMode() {
     const [ishaH, ishaM] = prayerTimes.Isha.split(':').map(Number);
     const [fajrH, fajrM] = prayerTimes.Fajr.split(':').map(Number);
 
-    const ishaDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), ishaH, ishaM, 0);
+    // Sleep mode starts 1 hour (60 minutes) after Isha Salah
+    const ishaDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), ishaH + 1, ishaM, 0);
     const fajrDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), fajrH, fajrM, 0);
     
     let isSleepTime = false;
 
     // Sleep mode active if:
-    // 1) Time is past Isha tonight
+    // 1) Time is past 1 hour after Isha tonight
     // 2) Time is before Fajr in the morning
     if (now >= ishaDate || now < fajrDate) {
         isSleepTime = true;
