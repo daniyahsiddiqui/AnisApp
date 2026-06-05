@@ -1594,9 +1594,9 @@ body.theme-joyful .bubble-text {
 .sleep-mode-active svg {
     display: none !important;
 }
-/* Ensure Modals always override sleep mode display none rules */
-.sleep-mode-active .modal,
-.sleep-mode-active .modal * {
+/* Ensure Modals always override sleep mode display none rules, but only if they are open */
+.sleep-mode-active .modal.open,
+.sleep-mode-active .modal.open * {
     display: block !important;
 }
 .sleep-mode-active .modal.open {
