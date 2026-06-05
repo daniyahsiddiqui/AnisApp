@@ -1580,16 +1580,6 @@ body.theme-joyful .bubble-text {
     to { transform: rotate(360deg); }
 }
 
-/* Sleep / Night Clock Auto-Dim Mode */
-.sleep-mode-active {
-    filter: brightness(0.2) contrast(1.2) !important;
-    background: black !important;
-    transition: filter 3s ease-in-out, background 3s ease-in-out;
-}
-.sleep-mode-active .app-container,
-.sleep-mode-active .joy-screen {
-    background: transparent !important;
-}
 .sleep-mode-active #alert-banners-container,
 .sleep-mode-active #joy-alert-banners-container,
 .sleep-mode-active #layout-categorized,
@@ -1603,6 +1593,23 @@ body.theme-joyful .bubble-text {
 .sleep-mode-active .top-bar,
 .sleep-mode-active svg {
     display: none !important;
+}
+/* Ensure Modals always override sleep mode display none rules */
+.sleep-mode-active .modal,
+.sleep-mode-active .modal * {
+    display: block !important;
+}
+.sleep-mode-active .modal.open {
+    display: flex !important;
+}
+.sleep-mode-active {
+    filter: brightness(0.2) contrast(1.2) !important;
+    background: black !important;
+    transition: filter 3s ease-in-out, background 3s ease-in-out;
+}
+.sleep-mode-active .app-container,
+.sleep-mode-active .joy-screen {
+    background: transparent !important;
 }
 .sleep-mode-active .time-display,
 .sleep-mode-active .joy-clock-wrap {

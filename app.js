@@ -2222,6 +2222,8 @@ function updateDailyRemindersCard() {
 }
 
 // --- Sleep / Night Mode Check (Isha to Fajr) ---
+let sleepModeWakeTime = 0; // timestamp when temporary wake-up ends
+
 function checkSleepMode() {
     if (!prayerTimes.Isha || !prayerTimes.Fajr) return;
 
@@ -2237,10 +2239,13 @@ function checkSleepMode() {
     // Sleep mode active if:
     // 1) Time is past Isha tonight
     // 2) Time is before Fajr in the morning
-    if (now >= ishaDate) {
+    if (now >= ishaDate || now < fajrDate) {
         isSleepTime = true;
-    } else if (now < fajrDate) {
-        isSleepTime = true;
+    }
+
+    // Temporary wake override
+    if (isSleepTime && Date.now() < sleepModeWakeTime) {
+        isSleepTime = false;
     }
 
     if (isSleepTime) {
@@ -2249,6 +2254,16 @@ function checkSleepMode() {
         document.body.classList.remove('sleep-mode-active');
     }
 }
+
+// Add global listener to wake up screen on touch
+document.addEventListener('pointerdown', (e) => {
+    // If sleep mode is active and we touch the screen, temporarily wake it up
+    if (document.body.classList.contains('sleep-mode-active')) {
+        sleepModeWakeTime = Date.now() + 10000; // Keep awake for 10 seconds
+        checkSleepMode();
+        e.stopPropagation();
+    }
+});
 
 // Start app
 init();
