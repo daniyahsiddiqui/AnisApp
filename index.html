@@ -52,9 +52,12 @@
         <main class="main-content">
             <!-- Top Alert Banners (Friday Kahf & Holiday Countdown) -->
             <div id="alert-banners-container" style="width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1rem; width: 100%;">
-                <div id="friday-kahf-banner" class="alert-banner" style="display: none;">
-                    <span class="banner-icon">🕌</span>
-                    <span class="banner-text">Friday Reminder: Don't forget to read Surah Al-Kahf today!</span>
+                <div id="friday-kahf-banner" class="alert-banner" style="display: none; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 0.8rem;">
+                        <span class="banner-icon">🕌</span>
+                        <span class="banner-text">Friday Reminder: Don't forget to read Surah Al-Kahf today!</span>
+                    </div>
+                    <button class="play-kahf-btn" style="background: var(--accent-color); color: white; border: none; border-radius: 20px; padding: 4px 12px; font-weight: 700; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 4px;">▶ Play Surah</button>
                 </div>
                 <div id="holiday-banner" class="alert-banner holiday-alert" style="display: none;">
                     <span class="banner-icon">🕋</span>
@@ -227,8 +230,9 @@
         <main class="joy-screen">
             <!-- Alert Banners for Joyful Layout -->
             <div id="joy-alert-banners-container" style="width: 100%; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
-                <div id="joy-friday-kahf-banner" class="joy-alert-banner" style="display: none;">
+                <div id="joy-friday-kahf-banner" class="joy-alert-banner" style="display: none; justify-content: space-between; align-items: center;">
                     <span>🕌 Friday: Read Surah Al-Kahf!</span>
+                    <button class="play-kahf-btn" style="background: var(--joy-purple); color: white; border: none; border-radius: 12px; padding: 3px 8px; font-weight: 700; font-size: 0.75rem; cursor: pointer; margin-left: 10px;">▶ Play</button>
                 </div>
                 <div id="joy-holiday-banner" class="joy-alert-banner joy-holiday-alert" style="display: none;">
                     <span id="joy-holiday-banner-text">Occasion Countdown...</span>

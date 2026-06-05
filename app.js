@@ -315,6 +315,13 @@ function setupEventListeners() {
         fetchDailyHadith();
     });
     
+    // play-kahf-btn Friday Surah Al-Kahf triggers
+    UI.on('.play-kahf-btn', 'click', async () => {
+        elements.quranSurahSelect.value = 18; // Surah Al-Kahf is Surah number 18
+        await loadSurahAudioData(18);
+        startOrResumeQuran();
+    });
+
     if (elements.closeHadithBtn) {
         elements.closeHadithBtn.addEventListener('click', () => {
             elements.hadithModal.classList.remove('open');
