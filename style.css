@@ -1500,19 +1500,29 @@ body.theme-joyful .bubble-text {
     display: flex;
     gap: 1.5rem;
     width: 100%;
-    max-width: 800px;
+    max-width: 900px;
     justify-content: center;
     flex-wrap: wrap;
     margin-top: 1.2rem;
 }
 
 .dashboard-side-by-side .dashboard-card {
-    flex: 1;
-    min-width: 280px;
-    min-height: 200px;
+    min-height: 220px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+}
+
+.dashboard-side-by-side .reminder-board-card {
+    flex: 1.6; /* Grow wider than media center card */
+    min-width: 340px;
+    padding: 1.5rem;
+}
+
+.dashboard-side-by-side .media-center-card {
+    flex: 1;
+    min-width: 260px;
+    padding: 1.2rem;
 }
 
 /* Alert Banners Styling */
