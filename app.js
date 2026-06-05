@@ -1357,10 +1357,10 @@ const mosques = [
     { name: "Sheikh Zayed Grand Mosque", location: "Abu Dhabi, UAE", url: "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?q=80&w=1200&auto=format&fit=crop" },
     { name: "Sultan Ahmed Mosque (Blue Mosque)", location: "Istanbul, Turkey", url: "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?q=80&w=1200&auto=format&fit=crop" },
     { name: "Al-Haram Mosque", location: "Makkah, Saudi Arabia", url: "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?q=80&w=1200&auto=format&fit=crop" },
-    { name: "Al-Masjid an-Nabawi", location: "Medina, Saudi Arabia", url: "https://images.unsplash.com/photo-1601058440526-3d233abbe31e?q=80&w=1200&auto=format&fit=crop" },
-    { name: "Putra Mosque", location: "Putrajaya, Malaysia", url: "https://images.unsplash.com/photo-1566121933170-c750b38c2627?q=80&w=1200&auto=format&fit=crop" },
-    { name: "Faisal Mosque", location: "Islamabad, Pakistan", url: "https://images.unsplash.com/photo-1627817603175-104928b58474?q=80&w=1200&auto=format&fit=crop" },
-    { name: "Hassan II Mosque", location: "Casablanca, Morocco", url: "https://images.unsplash.com/photo-1533468551403-1250269de878?q=80&w=1200&auto=format&fit=crop" }
+    { name: "Al-Masjid an-Nabawi", location: "Medina, Saudi Arabia", url: "https://images.unsplash.com/photo-1590076215667-873d6f009088?q=80&w=1200&auto=format&fit=crop" },
+    { name: "Putra Mosque", location: "Putrajaya, Malaysia", url: "https://images.unsplash.com/photo-1580985223062-841804f56f1c?q=80&w=1200&auto=format&fit=crop" },
+    { name: "Faisal Mosque", location: "Islamabad, Pakistan", url: "https://images.unsplash.com/photo-1605281317010-fe5fed91e444?q=80&w=1200&auto=format&fit=crop" },
+    { name: "Hassan II Mosque", location: "Casablanca, Morocco", url: "https://images.unsplash.com/photo-1563804868285-b072d733a466?q=80&w=1200&auto=format&fit=crop" }
 ];
 
 function showAthanOverlay(salahName) {
